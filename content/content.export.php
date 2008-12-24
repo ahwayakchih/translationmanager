@@ -47,10 +47,8 @@
 				}
 			}
 
-			header('Content-Type: text/xml; charset=utf-8');
-			echo '<'.'?xml version="1.0" encoding="UTF-8"?'.'>';
-
 			$xliff = new XMLElement('xliff');
+			$xliff->setIncludeHeader(true);
 			$xliff->setAttribute('version', '1.2');
 			$xliff->setAttribute('xmlns', 'urn:oasis:names:tc:xliff:document:1.2');
 
@@ -149,8 +147,17 @@
 			$file->appendChild($body);
 			$xliff->appendChild($file);
 
-			echo $xliff->generate(true);
-			exit();
+			$result = $xliff->generate(true);
+
+			if (!empty($result)) {
+				header('Content-Type: text/xml; charset=utf-8');
+				header('Content-Disposition: attachment; filename="'.$extension.'-lang.'.$lang.'.xliff"');
+				header("Content-Description: File Transfer");
+				header("Cache-Control: no-cache, must-revalidate");
+				header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+				echo $result;
+				exit();
+			}
 		}
 	}
 
