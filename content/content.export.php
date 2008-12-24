@@ -13,7 +13,8 @@
 		}
 
 		function view(){
-			list($lang, $extension) = explode(':', $this->_context[0]);
+			$lang = $this->_context[0];
+			$extension = $this->_context[1];
 
 			if (strlen($lang) < 1) {
 				$this->setPageType('form');
@@ -35,6 +36,15 @@
 					'dictionary' => array(),
 					'transliterations' => array(),
 				);
+				// Try to find language name in other translations for selected language
+				$others = $this->_tm->listExtensions($lang);
+				foreach ($others as $t_ext) {
+					$t_trans = $this->_tm->get($lang, $t_ext);
+					if (!empty($t_trans['about']['name'])) {
+						$translation['about']['name'] = $t_trans['about']['name'];
+						break;
+					}
+				}
 			}
 
 			header('Content-Type: text/xml; charset=utf-8');
