@@ -1,0 +1,20 @@
+td small {
+	color: #887;
+}
+
+tr.selected td small {
+	color: #bbb;
+}
+
+th[title] {
+	cursor: help;
+}
+
+table.translations {
+	margin-top: 0px;
+	margin-bottom: 1.75em;
+}
+
+table.translations tr td:first-child {
+	width: 60%;
+}
