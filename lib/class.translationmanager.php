@@ -123,56 +123,14 @@
 			return true;
 		}
 
-		public function defaultDictionary($name=NULL) {
-			// TODO: use cache and clear it whenever some extension is added, removed or updated
-
-			$paths = array();
-			if ($name === NULL || $name == 'symphony') {
-				$paths += array(
-					'symphony/content',
-					'symphony/template',
-					'symphony/lib/toolkit',
-					'symphony/lib/toolkit/data-sources',
-					'symphony/lib/toolkit/events',
-					'symphony/lib/toolkit/fields',
-				);
-			}
-
-			$names = array();
-			if ($name === NULL) {
-				$temp = $this->_Parent->ExtensionManager->listAll();
-				$names = array_keys($temp);
-			}
-			else if ($name != 'symphony' && strlen($name) > 0) $names[] = $name;
-
-			foreach ($names as $name) {
-				$paths += array(
-					'extensions/'.$name.'/content',
-					'extensions/'.$name.'/template',
-					'extensions/'.$name.'/data-sources',
-					'extensions/'.$name.'/events',
-					'extensions/'.$name.'/fields',
-					//'extensions/'.$name.'/lib', // TODO: extensions usually keep "alien" (non-symphony) code there, so there may be name duplication problems :(.
-					'extensions/'.$name
-				);
-			}
-
+		public function defaultDictionary($name = NULL) {
 			$strings = array();
 			$strings[] = array(); // Warnings placeholder
-			foreach ($paths as $path) {
+			foreach ($this->__dictionaryPaths($name) as $path) {
 				$files = General::listStructure(DOCROOT."/$path", array('php', 'tpl'), false, 'asc');
 				if (empty($files['filelist'])) continue;
 				foreach ($files['filelist'] as $file) {
-					$temp = TranslationManager::__findStrings(file_get_contents(DOCROOT."/$path/$file"));
-					if (is_array($temp['warning'])) {
-						foreach ($temp['warning'] as $string) {
-							$strings[0][$string][$file]++;
-						}
-						unset($temp['warning']);
-					}
-					foreach ($temp as $string) {
-						$strings[$string][$file]++;
-					}
+					$temp = $this->__findStrings(DOCROOT."/$path/$file", $strings);
 				}
 			}
 			return $strings;
@@ -199,61 +157,117 @@
 			return strnatcmp($a['release-date'], $b['release-date']);
 		}
 
-		private static function __findStrings($data) {
-			$result = array();
-			TranslationManager::__getStrings($result, $data);
-			return $result;
-		}
-
-		private static function __getStrings(&$result, $data) {
-			if (preg_match_all('/(?<!function\s)__\(((?:[^()]++|\((?1)\))*)\)/', $data, $found, PREG_PATTERN_ORDER)) {
-				foreach ($found[1] as $i) {
-					if ($i{0} != "'" && $i{0} != '"') {
-						if ($i{0} == '$' && preg_match('/^\$[^s]+$/', $i)) {
-							// it's probably just: __($variable)
-							// TODO: check if $variable is not set in the same scope, like: $variable = ($check ? 'one' : 'two'); __($variable);
-							//       in which case we could try to parse it
-							$result['warning'][] = $i;
-							continue;
-						}
-						else if ($i{0} == '(') {
-							// Try to parse __(($check ? 'one' : 'two')) case
-							if (preg_match('/^\(((?:[^()]++|\((?1)\))*)\)/', $i, $temp)) {
-								$php = $temp[0];
-								$result['warning'][] = $i;
-								TranslationManager::__getStrings($result, str_replace($php, '', $i));
-								TranslationManager::__safe_eval($result, $php);
-								continue;
-							}
-						}
-
-						$result['warning'][] = $i;
-						TranslationManager::__getStrings($result, $i);
-						continue;
-					}
-
-					if (preg_match('/'.$i{0}.'([^'.$i{0}.'\\\\]*(\\\\.[^'.$i{0}.'\\\\]*)*)'.$i{0}.'(\s*,\s*[\w\W]+|)/', $i, $s)) {
-						$result[] = str_replace('\\'.$i{0}, $i{0}, $s[1]); // Unescape quotes or doublequotes, depending on which was used to put text into PHP
-
-						if ($s[3]) TranslationManager::__getStrings($result, $s[3]);
-					}
-				}
+		private function __dictionaryPaths($name = NULL) {
+			$paths = array();
+			if ($name === NULL || $name == 'symphony') {
+				$paths += array(
+					'symphony/content',
+					'symphony/template',
+					'symphony/lib/toolkit',
+					'symphony/lib/toolkit/data-sources',
+					'symphony/lib/toolkit/events',
+					'symphony/lib/toolkit/fields',
+				);
 			}
+
+			$names = array();
+			if ($name === NULL) {
+				$extensions = $this->_Parent->ExtensionManager->listAll();
+				if (is_array($extensions)) $names = array_keys($extensions);
+			}
+			else if ($name != 'symphony' && strlen($name) > 0) $names[] = $name;
+
+			foreach ($names as $name) {
+				$paths += array(
+					'extensions/'.$name.'/content',
+					'extensions/'.$name.'/template',
+					'extensions/'.$name.'/data-sources',
+					'extensions/'.$name.'/events',
+					'extensions/'.$name.'/fields',
+					//'extensions/'.$name.'/lib', // TODO: extensions usually keep "alien" (non-symphony) code there, so there may be name duplication problems :(.
+					'extensions/'.$name
+				);
+			}
+
+			return $paths;
 		}
 
-		private static function __safe_eval(&$result, $php) {
-			$dummy = array();
-			if (preg_match_all('/(?:[^\])\$[^\s]+/', $php, $temp, PREG_PATTERN_ORDER)) {
-				for ($x = 0; $x < count($temp[0]); $x++) {
-					$dummy[$x] = 0;
-					$php = str_replace($temp[0][$x], '$dummy['.$x.']', $php);
+		private function __findStrings($path, &$result) {
+			if (!file_exists($path)) return array();
+
+			$tokens = file_get_contents($path);
+			if (empty($tokens)) return array();
+
+			$tokens = token_get_all($tokens);
+			if (!is_array($tokens) || empty($tokens)) return array();
+
+			$i = -1;
+			if (!is_array($result) || !is_array($result[0])) $result[0] = array(); // Placeholder for warnings
+			while ($tokens[++$i]) {
+				if ($tokens[$i][0] != T_STRING || $tokens[$i][1] != '__') continue;
+				$chunkLine = $tokens[$i][2];
+				if ($tokens[++$i] != '(') continue;
+
+				$depth = 1;
+				$chunk = '';
+				$warn = false;
+				while ($tokens[++$i]) {
+					if (is_array($tokens[$i])) {
+						if ($tokens[$i][0] == T_CONSTANT_ENCAPSED_STRING) { // like: 'some value' or "some value"
+							$chunk .= $tokens[$i][1];
+							$str = trim(str_replace('\\'.$tokens[$i][1]{0}, $tokens[$i][1]{0}, $tokens[$i][1]), $tokens[$i][1]{0}); // constant strings are tokenized with qute included
+							// TODO: unescape $str, so things like "foo\'s" will be properly parsed into "foo's"
+							//eval('$str = '.$tokens[$i][1].';');
+							$result[$str][$path][] = $tokens[$i][2];
+						}
+						else if ($tokens[$i][0] == T_START_HEREDOC) { // like <<<END some value END
+							$str = '';
+							$line = $tokens[$i][2];
+							while (!is_array($tokens[++$i]) || $tokens[$i][0] != T_END_HEREDOC) {
+								if (is_array($tokens[$i])) $str .= $tokens[$i][1];
+								else $str .= $tokens[$i];
+							}
+							$result[$str][$path][] = $line;
+							$warn = true; // Warn about using parsable strings for translatable data
+							$chunk .= $str;
+						}
+						else {
+							$chunk .= $tokens[$i][1];
+						}
+					}
+					else if ($tokens[$i] == '(') {
+						$depth++;
+						$chunk .= $tokens[$i];
+						$warn = true;
+					}
+					else if ($tokens[$i] == ')') {
+						$depth--;
+						$chunk .= $tokens[$i];
+						if ($depth <= 0) break 1;
+					}
+					else if ($tokens[$i] == '"') { // This starts things like: "some $value"
+						$chunk .= $tokens[$i];
+						if (!is_array($tokens[$i+1]) || $tokens[$i+1][0] != T_ENCAPSED_AND_WHITESPACE) continue;
+						$str = '';
+						$line = $tokens[$i+1][2];
+						while ($tokens[++$i] != '"') {
+							if (is_array($tokens[$i])) $str .= $tokens[$i][1];
+							else $str .= $tokens[$i];
+						}
+						$result[$str][$path][] = $line;
+						$warn = true; // Warn about using parsable strings for translatable data
+						$chunk .= $str;
+					}
+					else if ($tokens[$i] == '.') {
+						$chunk .= $tokens[$i];
+						$warn = true;
+					}
+					else if ($tokens[$i] == ',' && $depth == 1) break 1;
+					else $chunk .= $tokens[$i];
 				}
-				eval('$result[] = '.$php.';');
-				foreach ($dummy as $i => $v) {
-					$dummy[$i] = 1;
+				if ($warn) {
+					$result[0][$chunk][$path][] = $chunkLine;
 				}
-				eval('$result[] = '.$php.';');
-				// TODO: try to run for all combinations of values? $dummy[0] = 0; $dummy[1] = 1; $dummy[2] = 0; etc...
 			}
 		}
 
