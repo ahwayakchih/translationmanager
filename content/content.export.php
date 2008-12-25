@@ -54,17 +54,25 @@
 			$xliff->setAttribute('xmlns', 'urn:oasis:names:tc:xliff:document:1.2');
 
 			$file = new XMLElement('file');
-			$file->setAttribute('original', URL.'/symphony/extension/translationmanager/');
+			$file->setAttribute('original', URL.'/symphony/extension/translationmanager/edit/'.$lang.($extension ? '/'.$extension : ''));
 			$file->setAttribute('source-language', 'en');
 			$file->setAttribute('target-language', $lang);
 			$file->setAttribute('datatype', 'x-symphony');
 			$file->setAttribute('xml:space', 'preserve');
 			if ($extension) $file->setAttribute('product-name', $extension);
+			// TODO: load version of extension
+			//if ($extension) $file->setAttribute('product-version', $extension);
 			// TODO: convert date to format specified in http://docs.oasis-open.org/xliff/v1.2/os/xliff-core.html#date
 			if ($translation['about']['release-date']) $file->setAttribute('date', $translation['about']['release-date']);
 			if ($translation['about']['name']) $file->setAttribute('category', $translation['about']['name']);
 
 			$header = new XMLElement('header');
+
+			$tool = new XMLElement('tool');
+			$tool->setAttribute('tool-id', 'tm');
+			$tool->setAttribute('tool-name', 'Symphony - Translation Manager');
+			$tool->setAttribute('tool-version', '0.9');
+			$header->appendChild($tool);
 
 			if (is_array($translation['about']['author'])) {
 				$group = new XMLElement('phase-group');
@@ -78,6 +86,7 @@
 					$phase = new XMLElement('phase');
 					$phase->setAttribute('phase-name', $author['name']);
 					$phase->setAttribute('phase-process', 'translation');
+					$phase->setAttribute('tool-id', 'tm');
 					if ($author['release-date']) $phase->setAttribute('date', $author['release-date']);
 					if ($author['name']) $phase->setAttribute('contact-name', $author['name']);
 					if ($author['email']) $phase->setAttribute('contact-email', $author['email']);

@@ -6,7 +6,7 @@ tr.selected td small {
 	color: #bbb;
 }
 
-th[title] {
+th[title], td[title] {
 	cursor: help;
 }
 

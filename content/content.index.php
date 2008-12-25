@@ -29,6 +29,11 @@
 
 			$warnings = array_shift($default);
 
+			$allnames = array('symphony' => 'Symphony');
+			foreach ($allextensions as $extension => $about) {
+				$allnames[$extension] = $about['name'];
+			}
+
 			$aTableHead = array(
 				array('Name', 'col'),
 				array('Code', 'col'),
@@ -49,12 +54,13 @@
 					$translated = array_filter($language['dictionary'], 'trim');
 					$missing = array_diff_key($default, $language['dictionary']);
 					$obsolete = array_diff_key($language['dictionary'], $default);
+					$names = array_intersect_key($allnames, array_fill_keys($extensions, true));
 
 					if (!$language['about']['name']) $language['about']['name'] = $lang;
 
-					$td1 = Widget::TableData(Widget::Anchor($language['about']['name'], $this->_Parent->getCurrentPageURL().'edit/'.$lang.'/', $language['about']['name']));
+					$td1 = Widget::TableData(Widget::Anchor($language['about']['name'], $this->_Parent->getCurrentPageURL().'edit/'.$lang.'/', $lang));
 					$td2 = Widget::TableData($lang);
-					$td3 = Widget::TableData((string)count($extensions), NULL, NULL, NULL, array('title' => implode(',', $extensions)));
+					$td3 = Widget::TableData((string)count($extensions), NULL, NULL, NULL, array('title' => implode(', ', $names)));
 					$td4 = Widget::TableData(count($translated).' <small>('.floor((count($translated) - count($obsolete)) / count($default) * 100).'%)</small>');
 					$td5 = Widget::TableData((string)count($obsolete));
 					$td6 = Widget::TableData(($lang == $current ? 'Yes' : 'No'));
