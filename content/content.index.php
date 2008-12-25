@@ -32,11 +32,11 @@
 			$aTableHead = array(
 				array('Name', 'col'),
 				array('Code', 'col'),
-				array('Extensions (out of '.(count($allextensions)+1).')*', 'col', array('title' => 'Extensions, including Symphony')),
-				array('Translated (out of '.count($default).')', 'col'),
+				array('Extensions*', 'col', array('title' => 'Out of '.(count($allextensions)+1).' (including Symphony)')),
+				array('Translated*', 'col', array('title' => 'Out of '.count($default).(($temp = count($warnings)) > 0 ? " (with $temp parser warnings)" : ''))),
 				array('Obsolete', 'col'),
 				array('Current', 'col'),
-			);	
+			);
 
 			$aTableBody = array();
 

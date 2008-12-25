@@ -27,6 +27,7 @@
 				'dictionary' => $this->_tm->defaultDictionary($extension),
 				'transliterations' => array(),
 			);
+
 			$warnings = array_shift($default['dictionary']);
 
 			$translation = $this->_tm->get($lang, $extension);
@@ -76,7 +77,7 @@
 					if (!$author['name']) continue;
 					$phase = new XMLElement('phase');
 					$phase->setAttribute('phase-name', $author['name']);
-					$phase->setAttribute('phase-process', 'modification');
+					$phase->setAttribute('phase-process', 'translation');
 					if ($author['release-date']) $phase->setAttribute('date', $author['release-date']);
 					if ($author['name']) $phase->setAttribute('contact-name', $author['name']);
 					if ($author['email']) $phase->setAttribute('contact-email', $author['email']);

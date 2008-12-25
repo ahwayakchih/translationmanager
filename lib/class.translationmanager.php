@@ -243,7 +243,7 @@
 
 		private static function __safe_eval(&$result, $php) {
 			$dummy = array();
-			if (preg_match_all('/\$[^\s]+/', $php, $temp, PREG_PATTERN_ORDER)) {
+			if (preg_match_all('/(?:[^\])\$[^\s]+/', $php, $temp, PREG_PATTERN_ORDER)) {
 				for ($x = 0; $x < count($temp[0]); $x++) {
 					$dummy[$x] = 0;
 					$php = str_replace($temp[0][$x], '$dummy['.$x.']', $php);

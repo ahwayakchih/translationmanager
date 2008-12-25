@@ -82,6 +82,7 @@
 					array('Name', 'col'),
 					array('Translated', 'col'),
 					array('Obsolete', 'col'),
+					array('Parser warnings', 'col'),
 				);
 
 				$extensions = $this->_tm->listExtensions($this->_context[0]);
@@ -107,11 +108,12 @@
 						$td1 = Widget::TableData(Widget::Anchor($allextensions[$extension]['name'], URL."/symphony/extension/translationmanager/export/{$this->_context[0]}/$extension/", 'Export'));
 						$td2 = Widget::TableData((string)count($translated).'/'.(string)count($default).' <small>('.$percent.'%)</small>');
 						$td3 = Widget::TableData((string)count($obsolete));
+						$td4 = Widget::TableData((string)count($warnings));
 
 						if (!$isCurrent || $extension != 'symphony') $td1->appendChild(Widget::Input('delete['.$extension.']', NULL, 'checkbox'));
 
 						## Add a row to the body array, assigning each cell to the row
-						$aTableBody[] = Widget::TableRow(array($td1, $td2, $td3));
+						$aTableBody[] = Widget::TableRow(array($td1, $td2, $td3, $td4));
 					}
 
 					$aTableBody2 = array();
@@ -123,11 +125,12 @@
 						$td1 = Widget::TableData(Widget::Anchor($allextensions[$extension]['name'], URL."/symphony/extension/translationmanager/export/{$this->_context[0]}/$extension/", 'Export'));
 						$td2 = Widget::TableData((string)count($translated).'/'.(string)count($default).' <small>('.$percent.'%)</small>');
 						$td3 = Widget::TableData((string)count($obsolete));
+						$td4 = Widget::TableData((string)count($warnings));
 
 						$td1->appendChild(Widget::Input('create['.$extension.']', NULL, 'checkbox'));
 
 						## Add a row to the body array, assigning each cell to the row
-						$aTableBody2[] = Widget::TableRow(array($td1, $td2, $td3), 'inactive');
+						$aTableBody2[] = Widget::TableRow(array($td1, $td2, $td3, $td4), 'inactive');
 					}
 				}
 
