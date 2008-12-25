@@ -54,7 +54,7 @@
 			$xliff->setAttribute('xmlns', 'urn:oasis:names:tc:xliff:document:1.2');
 
 			$file = new XMLElement('file');
-			$file->setAttribute('original', URL.'/symphony/extension/translationmanager/edit/'.$lang.($extension ? '/'.$extension : ''));
+			$file->setAttribute('original', basename(TranslationManager::filePath($lang, $extension)));
 			$file->setAttribute('source-language', 'en');
 			$file->setAttribute('target-language', $lang);
 			$file->setAttribute('datatype', 'x-symphony');
@@ -103,7 +103,7 @@
 			$group = new XMLElement('group');
 			$group->setAttribute('resname', 'dictionary');
 
-			$translated = array_filter($translation['dictionary'], 'trim');
+			$translated = array_intersect_key($default['dictionary'], array_filter($translation['dictionary'], 'trim'));
 			foreach ($translated as $k => $v) {
 				$unit = new XMLElement('trans-unit');
 				$unit->setAttribute('id', md5($k));

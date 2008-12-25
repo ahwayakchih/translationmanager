@@ -100,7 +100,7 @@
 						$default = $this->_tm->defaultDictionary($extension);
 						$warnings = array_shift($default);
 						$language = $this->_tm->get($this->_context[0], $extension);
-						$translated = array_filter($language['dictionary'], 'trim');
+						$translated = array_intersect_key($default, array_filter($language['dictionary'], 'trim'));
 						$missing = array_diff_key($default, $language['dictionary']);
 						$obsolete = array_diff_key($language['dictionary'], $default);
 

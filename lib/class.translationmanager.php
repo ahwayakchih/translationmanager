@@ -11,13 +11,13 @@
 		public function enable($lang) {
 			if (strlen($lang) < 1) return false;
 
-			if (!file_exists(LANG."/lang.$lang.php")) return false;
+			if (!file_exists(TranslationManager::filePath($lang, 'symphony'))) return false;
 
 			$this->_Parent->Configuration->set('lang', $lang, 'symphony');
 			return $this->_Parent->saveConfig();
 		}
 
-		public function listAll($name=NULL) {
+		public function listAll($name = NULL) {
 			$result = array();
 
 			if ($name === NULL) {
@@ -27,10 +27,9 @@
 				}
 			}
 			else if (strlen($name) > 0) {
-				$path = ($name == 'symphony' ? LANG : EXTENSIONS."/$name/lang");
+				$path = dirname(TranslationManager::filePath('en', $name));
 				foreach (glob($path.'/lang.*.php') as $file) {
 					$lang = preg_replace('/^[\w\W]+\/lang.(\w+).php/', '\\1', $file);
-					//$result[$lang][$name] = $file;
 					$result[$lang][] = $name;
 				}
 			}
@@ -42,33 +41,32 @@
 			if (strlen($lang) < 1) return array();
 			$result = array();
 
-			$file = LANG."/lang.$lang.php";
-			if (file_exists($file)) $result[] = 'symphony';
+			if (file_exists(TranslationManager::filePath($lang, 'symphony'))) $result[] = 'symphony';
 
 			foreach ($this->_Parent->ExtensionManager->listAll() as $extension => $about) {
-				$file = EXTENSIONS."/$extension/lang/lang.$lang.php";
-				if (file_exists($file)) $result[] = $extension;
+				if (file_exists(TranslationManager::filePath($lang, $extension))) $result[] = $extension;
 			}
 
 			return $result;
 		}
 
-		public function get($lang, $name=NULL) {
+		public function get($lang, $name = NULL) {
 			if ($name === NULL) {
 				$result = $this->get($lang, 'symphony');
 				foreach ($this->_Parent->ExtensionManager->listAll() as $extension => $about) {
 					// array_merge_recursive duplicates data inside 'about' (so there are two names of language instead of one string) :(.
 					$temp = $this->get($lang, $extension);
-					if (is_array($temp['about'])) $result['about'] = array_merge($result, $temp['about']);
-					if (is_array($temp['dictionary'])) $result['dictionary'] = array_merge($result, $temp['dictionary']);
-					if (is_array($temp['transliterations'])) $result['transliterations'] = array_merge($result, $temp['transliterations']);
+					// TODO: Merging about doesn't make much sense - new info will replace old,
+					//       so data about modifications dates and authors is useless in this case :(
+					if (is_array($temp['about'])) $result['about'] = array_merge($result['about'], $temp['about']);
+					if (is_array($temp['dictionary'])) $result['dictionary'] = array_merge($result['dictionary'], $temp['dictionary']);
+					if (is_array($temp['transliterations'])) $result['transliterations'] = array_merge($result['transliterations'], $temp['transliterations']);
 				}
 				return $result;
 			}
 			else if (strlen($name) < 1) return array();
 
-			$file = ($name == 'symphony' ? $file = LANG."/lang.$lang.php" : EXTENSIONS."/$name/lang/lang.$lang.php");
-
+			$file = TranslationManager::filePath($lang, $name);
 			if (!file_exists($file)) return array();
 
 			$data = file_get_contents($file);
@@ -94,16 +92,16 @@
 			if (!is_array($data['transliterations']) || ($isSymphony && empty($data['transliterations'])))
 				 $data['transliterations'] = ($isSymphony ? TranslationManager::defaultTransliterations() : array());
 
-			if ($isSymphony) $file = LANG.'/lang.'.$lang.'.php';
-			else {
-				$file = EXTENSIONS."/$name/lang/lang.$lang.php";
-				if (!is_dir(EXTENSIONS."/$name/lang") && !General::realiseDirectory(EXTENSIONS."/$name/lang", $this->_Parent->Configuration->get('write_mode', 'directory'))) return false;
+
+			$file = TranslationManager::filePath($lang, $name);
+			if (!$isSymphony && !is_dir(dirname($file))) {
+				if (!General::realiseDirectory(dirname($file), $this->_Parent->Configuration->get('write_mode', 'directory'))) return false;
 			}
 
 			return General::writeFile($file, TranslationManager::toPHP($data), $this->_Parent->Configuration->get('write_mode', 'file'));
 		}
 
-		public function remove($lang, $name=NULL) {
+		public function remove($lang, $name = NULL) {
 			// TODO: remove requirement for 'symphony' in current language
 			if (strlen($lang) < 1 || ($lang == $this->_Parent->Configuration->get('lang', 'symphony') && $name == 'symphony')) return false;
 
@@ -115,9 +113,7 @@
 				return true;
 			}
 
-			if ($name == 'symphony') $file = LANG."/lang.$lang.php";
-			else $file = EXTENSIONS."/$name/lang/lang.$lang.php";
-
+			$file = TranslationManager::filePath($lang, $name);
 			if (file_exists($file) && !General::deleteFile($file)) return false;
 
 			return true;
@@ -282,6 +278,11 @@
 			$php .= '?>';
 
 			return $php;
+		}
+
+		public static function filePath($lang, $name) {
+			if ($name == 'symphony') return LANG."/lang.$lang.php";
+			else return EXTENSIONS."/$name/lang/lang.$lang.php";
 		}
 
 		// Default transliterations come from default lang.en.php, written by developers of Symphony
