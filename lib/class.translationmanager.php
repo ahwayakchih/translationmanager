@@ -184,7 +184,7 @@
 					'extensions/'.$name.'/data-sources',
 					'extensions/'.$name.'/events',
 					'extensions/'.$name.'/fields',
-					//'extensions/'.$name.'/lib', // TODO: extensions usually keep "alien" (non-symphony) code there, so there may be name duplication problems :(.
+					'extensions/'.$name.'/lib', // TODO: test on extensions which use "non-symphony" code in lib directory.
 					'extensions/'.$name
 				);
 			}
@@ -201,72 +201,75 @@
 			$tokens = token_get_all($tokens);
 			if (!is_array($tokens) || empty($tokens)) return array();
 
-			$i = -1;
 			if (!is_array($result) || !is_array($result[0])) $result[0] = array(); // Placeholder for warnings
-			while ($tokens[++$i]) {
-				if ($tokens[$i][0] != T_STRING || $tokens[$i][1] != '__') continue;
-				$chunkLine = $tokens[$i][2];
-				if ($tokens[++$i] != '(') continue;
 
-				$depth = 1;
-				$chunk = '';
-				$warn = false;
-				while ($tokens[++$i]) {
-					if (is_array($tokens[$i])) {
-						if ($tokens[$i][0] == T_CONSTANT_ENCAPSED_STRING) { // like: 'some value' or "some value"
-							$chunk .= $tokens[$i][1];
-							$str = trim(str_replace('\\'.$tokens[$i][1]{0}, $tokens[$i][1]{0}, $tokens[$i][1]), $tokens[$i][1]{0}); // constant strings are tokenized with qute included
-							// TODO: unescape $str, so things like "foo\'s" will be properly parsed into "foo's"
-							//eval('$str = '.$tokens[$i][1].';');
-							$result[$str][$path][] = $tokens[$i][2];
-						}
-						else if ($tokens[$i][0] == T_START_HEREDOC) { // like <<<END some value END
-							$str = '';
-							$line = $tokens[$i][2];
-							while (!is_array($tokens[++$i]) || $tokens[$i][0] != T_END_HEREDOC) {
-								if (is_array($tokens[$i])) $str .= $tokens[$i][1];
-								else $str .= $tokens[$i];
-							}
-							$result[$str][$path][] = $line;
-							$warn = true; // Warn about using parsable strings for translatable data
-							$chunk .= $str;
-						}
-						else {
-							$chunk .= $tokens[$i][1];
-						}
+			$i = -1;
+			$on = false;
+			$warn = false;
+			$depth = -1;
+			$line = 0;
+			while ($tokens[++$i]) {
+				if (!$on) {
+					if (is_array($tokens[$i]) && $tokens[$i][1] == '__' && $tokens[$i][0] == T_STRING) { // __ function call starts parsable string
+						$on = $i;
+						$depth = -1;
+						$warn = false;
+						$line = $tokens[$i][2];
 					}
-					else if ($tokens[$i] == '(') {
-						$depth++;
-						$chunk .= $tokens[$i];
-						$warn = true;
-					}
-					else if ($tokens[$i] == ')') {
-						$depth--;
-						$chunk .= $tokens[$i];
-						if ($depth <= 0) break 1;
-					}
-					else if ($tokens[$i] == '"') { // This starts things like: "some $value"
-						$chunk .= $tokens[$i];
-						if (!is_array($tokens[$i+1]) || $tokens[$i+1][0] != T_ENCAPSED_AND_WHITESPACE) continue;
-						$str = '';
-						$line = $tokens[$i+1][2];
-						while ($tokens[++$i] != '"') {
-							if (is_array($tokens[$i])) $str .= $tokens[$i][1];
-							else $str .= $tokens[$i];
-						}
-						$result[$str][$path][] = $line;
-						$warn = true; // Warn about using parsable strings for translatable data
-						$chunk .= $str;
-					}
-					else if ($tokens[$i] == '.') {
-						$chunk .= $tokens[$i];
-						$warn = true;
-					}
-					else if ($tokens[$i] == ',' && $depth == 1) break 1;
-					else $chunk .= $tokens[$i];
+					continue;
 				}
-				if ($warn) {
-					$result[0][$chunk][$path][] = $chunkLine;
+				$isArray = is_array($tokens[$i]);
+
+				if ($isArray) {
+					$line = $tokens[$i][2];
+					if ($tokens[$i][0] == T_CONSTANT_ENCAPSED_STRING) { // 'some value' or "some value"
+						// Constant strings are tokenized with wrapping quote/doublequote included. Text is not unescaped, so things like "foo\'s" are there too.
+						$temp = trim(str_replace('\\'.$tokens[$i][1]{0}, $tokens[$i][1]{0}, $tokens[$i][1]), $tokens[$i][1]{0});
+						if ($temp) $result[$temp][$path][] = $tokens[$i][2];
+						else $warn = true; // Empty string?
+						continue;
+					}
+				}
+
+				if (($isArray && $tokens[$i][0] == T_START_HEREDOC) || // <<<END some value END
+					(!$isArray && $tokens[$i] == '"')) { // "some $variable inside parsable text"
+					$temp = '';
+					while ($tokens[++$i]) {
+						if (is_array($tokens[$i])) $temp .= $tokens[$i][1]; // Text is T_ENCAPSED_AND_WHITESPACE, but it can be also variable, function call, etc...
+						else $temp .= $tokens[$i];
+					}
+					if ($temp) $result[$temp][$path][] = $line;
+					$warn = true;
+					continue;
+				}
+
+				if ($isArray) continue;
+
+				switch ($tokens[$i]) {
+					case '(': // Open inner parenthesis
+						if (++$depth > 0) $warn = true;
+						break;
+					case ')': // Close inner parenthesis
+						 if (--$depth >= 0) break;
+					case ',':
+						if ($depth > 0) break;
+						// Comma marking end of first argument passed to __()
+						if ($warn) { // Warn about using parsable strings and/or variable text for translatable data
+							$temp = '';
+							$l = $tokens[$on][2];
+							while ($on <= $i) {
+								if (is_array($tokens[$on])) $temp .= $tokens[$on][1];
+								else $temp .= $tokens[$on];
+								$on++;
+							}
+							$result[0][$temp][$path][] = $l;
+						}
+						$on = false;
+						break;
+					//case '.': // Gluing strings is not "clean" - use %s tokens! ;P
+					default: // Any other usage of PHP in place of simple string is not advised
+						$warn = true;
+						break;
 				}
 			}
 		}
