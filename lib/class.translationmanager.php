@@ -84,7 +84,7 @@
 
 			$isSymphony = ($name == 'symphony');
 
-			if (!is_array($data['about'])) $data['about'] = array();
+			if (!is_array($data['about'])) $data['about'] = array('extension' => $name);
 			$this->__updateAuthors($data['about']);
 
 			if (!is_array($data['dictionary'])) $data['dictionary'] = array();

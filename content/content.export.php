@@ -15,6 +15,7 @@
 		function view(){
 			$lang = $this->_context[0];
 			$extension = $this->_context[1];
+			$isSymphony = (empty($extension) || $extension == 'symphony');
 
 			if (strlen($lang) < 1) {
 				$this->setPageType('form');
@@ -48,124 +49,40 @@
 				}
 			}
 
-			$xliff = new XMLElement('xliff');
-			$xliff->setIncludeHeader(true);
-			$xliff->setAttribute('version', '1.2');
-			$xliff->setAttribute('xmlns', 'urn:oasis:names:tc:xliff:document:1.2');
-
-			$file = new XMLElement('file');
-			$file->setAttribute('original', basename(TranslationManager::filePath($lang, $extension)));
-			$file->setAttribute('source-language', 'en');
-			$file->setAttribute('target-language', $lang);
-			$file->setAttribute('datatype', 'x-symphony');
-			$file->setAttribute('xml:space', 'preserve');
-			if ($extension) $file->setAttribute('product-name', $extension);
-			// TODO: load version of extension
-			//if ($extension) $file->setAttribute('product-version', $extension);
-			// TODO: convert date to format specified in http://docs.oasis-open.org/xliff/v1.2/os/xliff-core.html#date
-			if ($translation['about']['release-date']) $file->setAttribute('date', $translation['about']['release-date']);
-			if ($translation['about']['name']) $file->setAttribute('category', $translation['about']['name']);
-
-			$header = new XMLElement('header');
-
-			$tool = new XMLElement('tool');
-			$tool->setAttribute('tool-id', 'tm');
-			$tool->setAttribute('tool-name', 'Symphony - Translation Manager');
-			$tool->setAttribute('tool-version', '0.9');
-			$header->appendChild($tool);
-
-			if (is_array($translation['about']['author'])) {
-				$group = new XMLElement('phase-group');
-				$appended = 0;
-				if (is_string($translation['about']['author']['name'])) {
-					$temp = $translation['about']['author'];
-					$translation['about']['author'][$temp['name']] = $temp;
-				}
-				foreach ($translation['about']['author'] as $name => $author) {
-					if (!$author['name']) continue;
-					$phase = new XMLElement('phase');
-					$phase->setAttribute('phase-name', $author['name']);
-					$phase->setAttribute('phase-process', 'translation');
-					$phase->setAttribute('tool-id', 'tm');
-					if ($author['release-date']) $phase->setAttribute('date', $author['release-date']);
-					if ($author['name']) $phase->setAttribute('contact-name', $author['name']);
-					if ($author['email']) $phase->setAttribute('contact-email', $author['email']);
-					if ($author['website']) $phase->setAttribute('company-name', $author['website']);
-					$group->appendChild($phase);
-					$appended++;
-				}
-				if ($appended) $header->appendChild($group);
-			}
-
-			$file->appendChild($header);
-			$body = new XMLElement('body');
-
-			$group = new XMLElement('group');
-			$group->setAttribute('resname', 'dictionary');
-
+			$dictionary = array();
 			$translated = array_intersect_key($default['dictionary'], array_filter($translation['dictionary'], 'trim'));
-			foreach ($translated as $k => $v) {
-				$unit = new XMLElement('trans-unit');
-				$unit->setAttribute('id', md5($k));
-				$unit->appendChild(new XMLElement('source', General::sanitize($k)));
-				$unit->appendChild(new XMLElement('target', General::sanitize($v), array('state' => 'translated')));
-				$group->appendChild($unit);
-			}
-			
 			$missing = array_diff_key($default['dictionary'], $translation['dictionary']);
-			foreach ($missing as $k => $v) {
-				$unit = new XMLElement('trans-unit');
-				$unit->setAttribute('id', md5($k));
-				$unit->appendChild(new XMLElement('source', General::sanitize($k)));
-				$unit->appendChild(new XMLElement('target', '', array('state' => 'new')));
-				$group->appendChild($unit);
-			}
-
 			$obsolete = array_diff_key($translation['dictionary'], $default['dictionary']);
-			foreach ($obsolete as $k => $v) {
-				$unit = new XMLElement('trans-unit');
-				$unit->setAttribute('id', md5($k));
-				$unit->appendChild(new XMLElement('source', General::sanitize($k)));
-				$unit->appendChild(new XMLElement('target', General::sanitize($v), array('state' => 'x-obsolete')));
-				$group->appendChild($unit);
+			if (is_array($translated) && count($translated) > 0) {
+				$dictionary['%%%%%%TRANSLATED%%%%%%'] = '%%%%%%TRANSLATED%%%%%%';
+				$dictionary += $translated;
 			}
-			$body->appendChild($group);
-
-			$group = new XMLElement('group');
-			$group->setAttribute('resname', 'transliterations');
-
-			if (is_array($translation['transliterations']) && !empty($translation['transliterations'])) {
-				foreach ($translation['transliterations'] as $k => $v) {
-					$unit = new XMLElement('trans-unit');
-					$unit->setAttribute('id', md5($k));
-					$unit->appendChild(new XMLElement('source', General::sanitize($k)));
-					$unit->appendChild(new XMLElement('target', General::sanitize($v), array('state' => 'translated')));
-					$group->appendChild($unit);
-				}
+			if (is_array($missing) && count($missing) > 0) {
+				$dictionary['%%%%%%MISSING%%%%%%'] = '%%%%%%MISSING%%%%%%';
+				$dictionary += array_fill_keys(array_keys($missing), 'TRANSLATION MISSING');
 			}
-			else if ($extension == 'symphony') {
-				foreach (TranslationManager::defaultTransliterations() as $k => $v) {
-					$unit = new XMLElement('trans-unit');
-					$unit->setAttribute('id', md5($k));
-					$unit->appendChild(new XMLElement('source', General::sanitize($k)));
-					$unit->appendChild(new XMLElement('target', General::sanitize($v), array('state' => 'new')));
-					$group->appendChild($unit);
-				}
+			if (is_array($obsolete) && count($obsolete) > 0) {
+				$dictionary['%%%%%%OBSOLETE%%%%%%'] = '%%%%%%OBSOLETE%%%%%%';
+				$dictionary += $obsolete;
 			}
-			$body->appendChild($group);
 
-			$file->appendChild($body);
-			$xliff->appendChild($file);
+			if ((!is_array($translation['transliterations']) || empty($translation['transliterations'])) && $isSymphony) {
+				$translation['transliterations'] = TranslationManager::defaultTransliterations();
+			}
 
-			$result = $xliff->generate(true);
+			$php = '<'."?php\n\n";
+			$php .= '$about = '.var_export($translation['about'], true).";\n\n";
+			$php .= '$dictionary = '.str_replace(' => ', " =>\n  ", preg_replace('/\n\s+\'%%%%%%(TRANSLATED|MISSING|OBSOLETE)%%%%%%\'\s+=>\s+\'%%%%%%(\1)%%%%%%\',\n/', "\n// \\1\n", var_export($dictionary, true))).";\n\n";
+			$php .= '$transliterations = '.var_export($translation['transliterations'], true).";\n\n";
+			$php .= '?>';
 
-			if (!empty($result)) {
-				header('Content-Type: text/xml; charset=utf-8');
-				header('Content-Disposition: attachment; filename="'.$extension.'-lang.'.$lang.'.xliff"');
+			if (!empty($php)) {
+				header('Content-Type: application/x-php; charset=utf-8');
+				header('Content-Disposition: attachment; filename="'.$extension.'-lang.'.$lang.'.php"');
 				header("Content-Description: File Transfer");
 				header("Cache-Control: no-cache, must-revalidate");
 				header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
-				echo $result;
+				echo trim($php);
 				exit();
 			}
 		}
