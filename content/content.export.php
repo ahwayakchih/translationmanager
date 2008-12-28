@@ -50,7 +50,7 @@
 			}
 
 			$dictionary = array();
-			$translated = array_intersect_key($default['dictionary'], array_filter($translation['dictionary'], 'trim'));
+			$translated = array_intersect_key(array_filter($translation['dictionary'], 'trim'), $default['dictionary']);
 			$missing = array_diff_key($default['dictionary'], $translation['dictionary']);
 			$obsolete = array_diff_key($translation['dictionary'], $default['dictionary']);
 			if (is_array($translated) && count($translated) > 0) {
@@ -59,7 +59,7 @@
 			}
 			if (is_array($missing) && count($missing) > 0) {
 				$dictionary['%%%%%%MISSING%%%%%%'] = '%%%%%%MISSING%%%%%%';
-				$dictionary += array_fill_keys(array_keys($missing), 'TRANSLATION MISSING');
+				$dictionary += array_fill_keys(array_keys($missing), false);
 			}
 			if (is_array($obsolete) && count($obsolete) > 0) {
 				$dictionary['%%%%%%OBSOLETE%%%%%%'] = '%%%%%%OBSOLETE%%%%%%';
@@ -70,9 +70,36 @@
 				$translation['transliterations'] = TranslationManager::defaultTransliterations();
 			}
 
+			$path = ($isSymphony ? TranslationManager::filePath($lang, 'symphony') : TranslationManager::filePath($lang, $extension));
+			$file = basename($path);
+			$path = dirname($path);
 			$php = '<'."?php\n\n";
+			$php .= <<<END
+/*
+	This is translation file for $extension.
+	To make it available in Symphony, rename it $file and upload to $path directory on server.
+*/
+
+END;
 			$php .= '$about = '.var_export($translation['about'], true).";\n\n";
+			$php .= <<<END
+/*
+	Dictionary array contains translations for text used in Symphony.
+	To add missing translations, simply scroll down to part of array marked as "// MISSING"
+	and change each "false" value into something like "'New translation of original text'"
+	(notice single quotes around translated text! Text has to be wrapped either by them or by doublequotes).
+*/
+
+END;
 			$php .= '$dictionary = '.str_replace(' => ', " =>\n  ", preg_replace('/\n\s+\'%%%%%%(TRANSLATED|MISSING|OBSOLETE)%%%%%%\'\s+=>\s+\'%%%%%%(\1)%%%%%%\',\n/', "\n// \\1\n", var_export($dictionary, true))).";\n\n";
+			$php .= <<<END
+/*
+	Transliterations are used to generate handles of entry fields and filenames.
+	They specify which characters (or bunch of characters) have to be changed, and what should be put into their place when entry or file is saved.
+	Transliterations are required only for translation of Symphony. They are not needed for extensions.
+*/
+
+END;
 			$php .= '$transliterations = '.var_export($translation['transliterations'], true).";\n\n";
 			$php .= '?>';
 

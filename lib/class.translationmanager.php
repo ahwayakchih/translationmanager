@@ -84,14 +84,13 @@
 
 			$isSymphony = ($name == 'symphony');
 
-			if (!is_array($data['about'])) $data['about'] = array('extension' => $name);
+			$data['about']['extension'] = $name;
 			$this->__updateAuthors($data['about']);
 
 			if (!is_array($data['dictionary'])) $data['dictionary'] = array();
 
 			if (!is_array($data['transliterations']) || ($isSymphony && empty($data['transliterations'])))
 				 $data['transliterations'] = ($isSymphony ? TranslationManager::defaultTransliterations() : array());
-
 
 			$file = TranslationManager::filePath($lang, $name);
 			if (!$isSymphony && !is_dir(dirname($file))) {
