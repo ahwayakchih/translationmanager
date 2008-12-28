@@ -70,14 +70,19 @@
 				$translation['transliterations'] = TranslationManager::defaultTransliterations();
 			}
 
+			if ($isSymphony) $name = 'Symphony';
+			else {
+				$temp = $this->_Parent->ExtensionManager->about($extension);
+				$name = $temp['name'];
+			}
 			$path = ($isSymphony ? TranslationManager::filePath($lang, 'symphony') : TranslationManager::filePath($lang, $extension));
 			$file = basename($path);
-			$path = dirname($path);
+			$path = str_replace(DOCROOT, '', dirname($path));
 			$php = '<'."?php\n\n";
 			$php .= <<<END
 /*
-	This is translation file for $extension.
-	To make it available in Symphony, rename it $file and upload to $path directory on server.
+	This is translation file for $name.
+	To make it available for Symphony installation, rename it $file and upload to $path/ directory on server.
 */
 
 END;
@@ -85,9 +90,41 @@ END;
 			$php .= <<<END
 /*
 	Dictionary array contains translations for text used in Symphony.
+
+	There are 3 states of translations:
+	- Translated: already used by Symphony,
+	- Missing: there was no translation available at the time of generating this template file,
+	- Obsolete: translated text which is no longer used by Symphony and can be removed from translation file.
+
 	To add missing translations, simply scroll down to part of array marked as "// MISSING"
 	and change each "false" value into something like "'New translation of original text'"
 	(notice single quotes around translated text! Text has to be wrapped either by them or by doublequotes).
+	So instead of something like:
+
+		'Original text' =>
+		false,
+
+	You'll have something like:
+
+		'Original text' =>
+		'Tekst oryginału',
+
+	You should leave all parts of text which look like "%s" or "%1\$s" (usually there is "s" or "d" character there).
+	They are placeholders for other text or HTML which will be put in their place when needed by Symphony.
+	You can move them around inside translated text, but not remove them. For example:
+
+		'Original %s is here' =>
+		'Tu jest oryginalny %s'
+
+	Placeholders with numbers inside them are used when there are more than one of them inside original text.
+	You can siwth their positions if needed, but do not change numbers into something else.
+	For example text used in page titles looks like "Symphony - Language - English" and is generated with:
+
+		'%1\$s &ndash; %2\$s &ndash; %3\$s'
+
+	To make titles look like "Language: English | Symphony" simply move placeholders around:
+
+		'%2\$s: %3\$s | %1\$s'
 */
 
 END;
@@ -96,7 +133,26 @@ END;
 /*
 	Transliterations are used to generate handles of entry fields and filenames.
 	They specify which characters (or bunch of characters) have to be changed, and what should be put into their place when entry or file is saved.
-	Transliterations are required only for translation of Symphony. They are not needed for extensions.
+	For example:
+
+		'/_and_/' => '+',
+
+	will change every instance of "_and_" into "+", so:
+
+		me_and_family.jpg
+
+	will turn into:
+
+		me+family.jpg
+
+	Please notice slashes at the beginning and end of original text. They are required there.
+	You can change them into different character, but that character cannot be used inside original text or has to be escaped by backslash, like this:
+
+		'/original\/path/' => 'new/path',
+
+	You can use full syntax of regular expressions there too. Read more about it on: http://php.net/manual/en/regexp.reference.php
+
+	Transliterations are required only inside translations of Symphony. They are not needed for extensions.
 */
 
 END;
