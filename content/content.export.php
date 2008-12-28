@@ -98,7 +98,7 @@ END;
 
 	To add missing translations, simply scroll down to part of array marked as "// MISSING"
 	and change each "false" value into something like "'New translation of original text'"
-	(notice single quotes around translated text! Text has to be wrapped either by them or by doublequotes).
+	(notice single quotes around translated text! Text has to be wrapped either by them or by double quotes).
 	So instead of something like:
 
 		'Original text' =>
@@ -117,7 +117,7 @@ END;
 		'Tu jest oryginalny %s'
 
 	Placeholders with numbers inside them are used when there are more than one of them inside original text.
-	You can siwth their positions if needed, but do not change numbers into something else.
+	You can switch their positions if needed, but do not change numbers into something else.
 	For example text used in page titles looks like "Symphony - Language - English" and is generated with:
 
 		'%1\$s &ndash; %2\$s &ndash; %3\$s'
