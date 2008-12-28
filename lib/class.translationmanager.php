@@ -175,11 +175,12 @@
 			foreach ($names as $name) {
 				$paths += array(
 					'extensions/'.$name.'/content',
+					'extensions/'.$name.'/interface',
 					'extensions/'.$name.'/template',
 					'extensions/'.$name.'/data-sources',
 					'extensions/'.$name.'/events',
 					'extensions/'.$name.'/fields',
-					'extensions/'.$name.'/lib', // TODO: test on extensions which use "non-symphony" code in lib directory.
+					'extensions/'.$name.'/lib', // TODO: needs testing with extensions which use "non-symphony" code in lib directory.
 					'extensions/'.$name
 				);
 			}
