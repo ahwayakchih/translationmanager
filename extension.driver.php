@@ -17,7 +17,6 @@
 				array(
 					'location'	=> 200,
 					'name'		=> 'Translations',
-					//'link'		=> '/list/',
 					'limit'		=> 'developer',
 				)
 			);
@@ -82,9 +81,9 @@
 			);
 
 			// Calculate ID, to prevent rewriting rules every time
-			$cacheID = md5(implode(', ', $buttons).$css);
-			if (file_exists(CACHE."/$cacheID.css")) {
-					$style = new XMLElement('style', file_get_contents(CACHE."/$cacheID.css"));
+			$cssFile = 'tm_'.md5(implode(', ', $buttons).$css).'.css';
+			if (file_exists(CACHE."/$cssFile") && strlen($override = file_get_contents(CACHE."/$cssFile")) > 0) {
+					$style = new XMLElement('style', $override);
 					$style->setAttribute('type', 'text/css');
 					$this->_Parent->Page->addElementToHead($style, 9999);
 					return true;
@@ -97,7 +96,7 @@
 					if ($rules[1][$i]{0} == '"' || $rules[1][$i]{0} == "'") $rules[1][$i] = trim($rules[1][$i], $rules[1][$i]{0});
 					if (!in_array($rules[1][$i], array_keys($buttons))) continue;
 
-					$file = md5($buttons[$rules[1][$i]]).'.png';
+					$file = 'tm_'.md5($buttons[$rules[1][$i]]).'.png';
 					if (!isset($files[$file])) {
 						$files[$file] = true;
 						if (($w = $this->generateButton(CACHE."/$file", $buttons[$rules[1][$i]]))) {
@@ -115,7 +114,7 @@
 				}
 
 				if (strlen(trim($override)) > 0) {
-					file_put_contents(CACHE."/$cacheID.css", $override);
+					file_put_contents(CACHE."/$cssFile", $override);
 
 					$style = new XMLElement('style', $override);
 					$style->setAttribute('type', 'text/css');
