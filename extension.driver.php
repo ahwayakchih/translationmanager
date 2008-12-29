@@ -144,10 +144,10 @@
 		}
 
 		private function generateButton($path, $text) {
-			//if (file_exists($path)) {
-			//	$info = getimagesize($img);
-			//	if (is_array($info)) return $info[0];
-			//}
+			if (file_exists($path)) {
+				$info = getimagesize($img);
+				if (is_array($info)) return $info[0];
+			}
 
 			$font = EXTENSIONS.'/translationmanager/assets/silkscreen.ttf';
 			$fontSize = 6.5;
