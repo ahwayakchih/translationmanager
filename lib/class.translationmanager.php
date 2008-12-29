@@ -125,9 +125,14 @@
 				$files = General::listStructure(DOCROOT."/$path", array('php', 'tpl'), false, 'asc');
 				if (empty($files['filelist'])) continue;
 				foreach ($files['filelist'] as $file) {
-					$temp = $this->__findStrings(DOCROOT."/$path/$file", $strings);
+					$this->__findStrings(DOCROOT."/$path/$file", $strings);
 				}
 			}
+
+			if ($name === NULL || $name == 'symphony') {
+				$this->__findNavigationStrings(ASSETS.'/navigation.xml', $strings);
+			}
+
 			return $strings;
 		}
 
@@ -189,13 +194,13 @@
 		}
 
 		private function __findStrings($path, &$result) {
-			if (!file_exists($path)) return array();
+			if (!file_exists($path)) return false;
 
 			$tokens = file_get_contents($path);
-			if (empty($tokens)) return array();
+			if (empty($tokens)) return false;
 
 			$tokens = token_get_all($tokens);
-			if (!is_array($tokens) || empty($tokens)) return array();
+			if (!is_array($tokens) || empty($tokens)) return false;
 
 			if (!is_array($result) || !is_array($result[0])) $result[0] = array(); // Placeholder for warnings
 
@@ -218,7 +223,7 @@
 
 				if ($isArray) {
 					$line = $tokens[$i][2];
-					if ($tokens[$i][0] == T_CONSTANT_ENCAPSED_STRING) { // 'some value' or "some value"
+					if ($tokens[$i][0] == T_CONSTANT_ENCAPSED_STRING && $tokens[$i-1] !== '[') { // 'some value' or "some value"
 						// Constant strings are tokenized with wrapping quote/doublequote included. Text is not unescaped, so things like "foo\'s" are there too.
 						$temp = trim(str_replace('\\'.$tokens[$i][1]{0}, $tokens[$i][1]{0}, $tokens[$i][1]), $tokens[$i][1]{0});
 						if ($temp) $result[$temp][$path][] = $tokens[$i][2];
@@ -250,7 +255,7 @@
 					case ',':
 						if ($depth > 0) break;
 						// Comma marking end of first argument passed to __()
-						if ($warn) { // Warn about using parsable strings and/or variable text for translatable data
+						if ($warn && $tokens[$on-1] !== '@') { // Warn about using parsable strings and/or variable text for translatable data
 							$temp = '';
 							$l = $tokens[$on][2];
 							while ($on <= $i) {
@@ -268,6 +273,31 @@
 						break;
 				}
 			}
+
+			return true;
+		}
+
+		private function __findNavigationStrings($path, &$result) {
+			$xml = new XmlDoc();
+			if (!$xml->parseFile($path)) return false;
+
+			$nodes = $xml->getArray();
+			$index = 0;
+			foreach ($nodes['navigation'] as $n) {
+				$index++;
+
+				if (!empty($n['group']['attributes']['name'])) $result[$n['group']['attributes']['name']][$path][] = $index;
+				$children = $n['group'][0]['children'];
+			
+				if (is_array($children)) {
+					foreach ($children as $n) {
+						$index++;
+						if (!empty($n['item']['attributes']['name']) && $n['item']['attributes']['visible'] !== 'no') $result[$n['item']['attributes']['name']][$path][] = $index;
+					}
+				}
+			}
+
+			return true;
 		}
 
 		public static function toPHP($data) {
