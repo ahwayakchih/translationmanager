@@ -65,10 +65,10 @@
 					$td5 = Widget::TableData((string)count($obsolete));
 					$td6 = Widget::TableData(($lang == $current ? 'Yes' : 'No'));
 
-					$td1->appendChild(Widget::Input('items['.$lang.']', NULL, 'checkbox'));
+					$td1->appendChild(Widget::Input('item', $lang, 'radio'));
 
 					## Add a row to the body array, assigning each cell to the row
-					$aTableBody[] = Widget::TableRow(array($td1, $td2, $td3, $td4, $td5, $td6));
+					$aTableBody[] = Widget::TableRow(array($td1, $td2, $td3, $td4, $td5, $td6), 'single');
 				}
 			}
 
@@ -91,23 +91,15 @@
 		}
 
 		function action() {
-			if (!$_POST['action']['apply']) return;
+			if (!$_POST['action']['apply'] || !$_POST['item']) return;
 
 			switch ($_POST['with-selected']) {
 				case 'delete':
-					if (is_array($_POST['items'])) {
-						foreach ($_POST['items'] as $lang => $selected) {
-							if ($selected == 'on') $this->delete($lang);
-						}
-					}
+					$this->delete($_POST['item']);
 					break;
 				case 'switch':
-					if (is_array($_POST['items'])) {
-						foreach ($_POST['items'] as $lang => $selected) {
-							if ($selected == 'on' && $this->_tm->enable($lang)) {
-								redirect(URL . '/symphony/extension/translationmanager/');
-							}
-						}
+					if ($this->_tm->enable($_POST['item'])) {
+						redirect(URL . '/symphony/extension/translationmanager/');
 					}
 					break;
 			}
