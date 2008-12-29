@@ -89,7 +89,7 @@ END;
 			$php .= '$about = '.var_export($translation['about'], true).";\n\n";
 			$php .= <<<END
 /*
-	Dictionary array contains translations for text used in Symphony.
+	Dictionary array contains translations of texts (labels, guidelines, titles, etc...) used by Symphony.
 
 	There are 3 states of translations:
 	- Translated: already used by Symphony,
@@ -128,7 +128,7 @@ END;
 */
 
 END;
-			$php .= '$dictionary = '.str_replace(' => ', " =>\n  ", preg_replace('/\n\s+\'%%%%%%(TRANSLATED|MISSING|OBSOLETE)%%%%%%\'\s+=>\s+\'%%%%%%(\1)%%%%%%\',\n/', "\n// \\1\n", var_export($dictionary, true))).";\n\n";
+			$php .= '$dictionary = '.str_replace(' => ', " =>\n  ", str_replace(",\n", ",\n\n", preg_replace('/\n\s+\'%%%%%%(TRANSLATED|MISSING|OBSOLETE)%%%%%%\'\s+=>\s+\'%%%%%%(\1)%%%%%%\',\n/', "\n// \\1\n", var_export($dictionary, true)))).";\n\n";
 			$php .= <<<END
 /*
 	Transliterations are used to generate handles of entry fields and filenames.
