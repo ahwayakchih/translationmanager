@@ -2,7 +2,8 @@
 
 	require_once(TOOLKIT . '/class.administrationpage.php');
 	require_once(EXTENSIONS . '/translationmanager/lib/class.translationmanager.php');
-
+	ini_set("display_errors","2");
+	ERROR_REPORTING(E_ALL);
 	Class contentExtensionTranslationManagerIndex extends AdministrationPage{
 		private $_tm;
 
@@ -82,6 +83,7 @@
 				array(NULL, false, 'With Selected...'),
 				array('delete', false, 'Delete'),
 				array('switch', false, 'Make it current'),
+				array('export', false, 'Export ZIP'),
 			);
 
 			$div->appendChild(Widget::Select('with-selected', $options));
@@ -101,6 +103,8 @@
 					if ($this->_tm->enable($_POST['item'])) {
 						redirect(URL . '/symphony/extension/translationmanager/');
 					}
+				case 'export':
+					$this->exportZIP($_POST['item']);
 					break;
 			}
 		}
@@ -110,6 +114,34 @@
 				$this->pageAlert('Cannot delete language in use. Please change language used by Symphony and try again.', AdministrationPage::PAGE_ALERT_ERROR);
 			else if (!$this->_tm->remove($lang))
 				$this->pageAlert('Failed to delete translation <code>'.$lang.'</code>. Please check file permissions or if it is not in use.', AdministrationPage::PAGE_ALERT_ERROR);
+		}
+
+		function exportZIP($lang) {
+			require_once(TOOLKIT.'/class.archivezip.php');
+
+			$zip = new ArchiveZip();
+			foreach ($this->_tm->listExtensions($lang) as $extension) {
+				$path = TranslationManager::filePath($lang, $extension);
+				if (!$zip->addFromFile($path, str_replace(DOCROOT, '', $path))) {
+					$this->pageAlert('Cannot add <code>'.$path.'</code> to ZIP file. Please check file permissions.', AdministrationPage::PAGE_ALERT_ERROR);
+					return false;
+				}
+			}
+
+			$data = $zip->save();
+
+			if (!$data) {
+				$this->pageAlert('Cannot generate ZIP data.', AdministrationPage::PAGE_ALERT_ERROR);
+				return false;
+			}
+
+			header('Content-Type: application/zip; charset=utf-8');
+			header('Content-Disposition: attachment; filename="symphony-language-'.$lang.'.zip"');
+			header("Content-Description: File Transfer");
+			header("Cache-Control: no-cache, must-revalidate");
+			header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+			echo $data;
+			exit();
 		}
 	}
 
