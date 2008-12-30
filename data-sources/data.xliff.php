@@ -70,7 +70,7 @@
 			}
 			return array(
 				"name" => "XLIFF",
-				"description" => "Returns translation data in XLIFF format.",
+				"description" => "Returns translation data in <a href=\"http://docs.oasis-open.org/xliff/v1.2/os/xliff-core.html\">XLIFF</a> format.",
 				"author" => array("name" => "Marcin Konicki",
 					"website" => "http://ahwayakchih.neoni.net",
 					"email" => "ahwayakchih@neoni.net"),
@@ -167,16 +167,18 @@
 				if ($appended) $header->appendChild($group);
 			}
 
-			$file->appendChild($header);
 			$body = new XMLElement('body');
 
 			$group = new XMLElement('group');
 			$group->setAttribute('resname', 'dictionary');
 
+			$sklDictionary = array();
+
 			$translated = array_intersect_key($default['dictionary'], array_filter($translation['dictionary'], 'trim'));
 			foreach ($translated as $k => $v) {
+				$sklDictionary[$k] = md5($k);
 				$unit = new XMLElement('trans-unit');
-				$unit->setAttribute('id', md5($k));
+				$unit->setAttribute('id', $sklDictionary[$k]);
 				$unit->appendChild(new XMLElement('source', General::sanitize($k)));
 				$unit->appendChild(new XMLElement('target', General::sanitize($v), array('state' => 'translated')));
 				$group->appendChild($unit);
@@ -184,8 +186,9 @@
 			
 			$missing = array_diff_key($default['dictionary'], $translation['dictionary']);
 			foreach ($missing as $k => $v) {
+				$sklDictionary[$k] = md5($k);
 				$unit = new XMLElement('trans-unit');
-				$unit->setAttribute('id', md5($k));
+				$unit->setAttribute('id', $sklDictionary[$k]);
 				$unit->appendChild(new XMLElement('source', General::sanitize($k)));
 				$unit->appendChild(new XMLElement('target', '', array('state' => 'new')));
 				$group->appendChild($unit);
@@ -193,8 +196,9 @@
 
 			$obsolete = array_diff_key($translation['dictionary'], $default['dictionary']);
 			foreach ($obsolete as $k => $v) {
+				$sklDictionary[$k] = md5($k);
 				$unit = new XMLElement('trans-unit');
-				$unit->setAttribute('id', md5($k));
+				$unit->setAttribute('id', $sklDictionary[$k]);
 				$unit->appendChild(new XMLElement('source', General::sanitize($k)));
 				$unit->appendChild(new XMLElement('target', General::sanitize($v), array('state' => 'x-obsolete')));
 				$group->appendChild($unit);
@@ -204,10 +208,12 @@
 			$group = new XMLElement('group');
 			$group->setAttribute('resname', 'transliterations');
 
+			$sklTransliterations = array();
 			if (is_array($translation['transliterations']) && !empty($translation['transliterations'])) {
 				foreach ($translation['transliterations'] as $k => $v) {
+					$sklTransliterations[$k] = md5($k);
 					$unit = new XMLElement('trans-unit');
-					$unit->setAttribute('id', md5($k));
+					$unit->setAttribute('id', $sklTransliterations[$k]);
 					$unit->appendChild(new XMLElement('source', General::sanitize($k)));
 					$unit->appendChild(new XMLElement('target', General::sanitize($v), array('state' => 'translated')));
 					$group->appendChild($unit);
@@ -215,8 +221,9 @@
 			}
 			else if ($extension == 'symphony' || empty($extension)) {
 				foreach (TranslationManager::defaultTransliterations() as $k => $v) {
+					$sklTransliterations[$k] = md5($k);
 					$unit = new XMLElement('trans-unit');
-					$unit->setAttribute('id', md5($k));
+					$unit->setAttribute('id', $sklTransliterations[$k]);
 					$unit->appendChild(new XMLElement('source', General::sanitize($k)));
 					$unit->appendChild(new XMLElement('target', General::sanitize($v), array('state' => 'new')));
 					$group->appendChild($unit);
@@ -224,6 +231,14 @@
 			}
 			$body->appendChild($group);
 
+			// Generate skeleton
+			$skl = new XMLElement('skl');
+			$translation['dictionary'] = $sklDictionary;
+			$translation['transliterations'] = $sklTransliterations;
+			$skl->appendChild(new XMLElement('internal-file', '<![CDATA['.TranslationManager::toPHP($translation).']]>', array('form' => 'application/x-php')));
+			$header->appendChild($skl);
+
+			$file->appendChild($header);
 			$file->appendChild($body);
 			$xliff->appendChild($file);
 
