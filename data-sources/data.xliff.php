@@ -184,7 +184,7 @@
 				$group->appendChild($unit);
 			}
 			
-			$missing = array_diff_key($default['dictionary'], $translation['dictionary']);
+			$missing = array_diff_key($default['dictionary'], $translated);
 			foreach ($missing as $k => $v) {
 				$sklDictionary[$k] = md5($k);
 				$unit = new XMLElement('trans-unit');
