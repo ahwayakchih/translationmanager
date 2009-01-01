@@ -52,8 +52,7 @@
 			else {
 				foreach ($translations as $lang => $extensions) {
 					$language = $this->_tm->get($lang);
-					$translated = array_filter($language['dictionary'], 'trim');
-					$missing = array_diff_key($default, $language['dictionary']);
+					$translated = array_intersect_key($default, array_filter($language['dictionary'], 'trim'));
 					$obsolete = array_diff_key($language['dictionary'], $default);
 					$names = array_intersect_key($allnames, array_fill_keys($extensions, true));
 
@@ -62,7 +61,7 @@
 					$td1 = Widget::TableData(Widget::Anchor($language['about']['name'], $this->_Parent->getCurrentPageURL().'edit/'.$lang.'/', $lang));
 					$td2 = Widget::TableData($lang);
 					$td3 = Widget::TableData((string)count($extensions), NULL, NULL, NULL, array('title' => implode(', ', $names)));
-					$td4 = Widget::TableData(count($translated).' <small>('.floor((count($translated) - count($obsolete)) / count($default) * 100).'%)</small>');
+					$td4 = Widget::TableData(count($translated).' <small>('.floor((count($translated) / count($default)) * 100).'%)</small>');
 					$td5 = Widget::TableData((string)count($obsolete));
 					$td6 = Widget::TableData(($lang == $current ? 'Yes' : 'No'));
 

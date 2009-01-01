@@ -100,11 +100,9 @@
 						$default = $this->_tm->defaultDictionary($extension);
 						$warnings = array_shift($default);
 						$language = $this->_tm->get($this->_context[0], $extension);
-						$translated = array_intersect_key($default, array_filter($language['dictionary'], 'trim'));
-						$missing = array_diff_key($default, $language['dictionary']);
+						$translated = array_intersect_key(array_filter($language['dictionary'], 'trim'), $default);
 						$obsolete = array_diff_key($language['dictionary'], $default);
-
-						$percent = floor((count($translated) - count($obsolete)) / count($default) * 100);
+						$percent = floor(count($translated) / count($default) * 100);
 						$td1 = Widget::TableData(Widget::Anchor($allextensions[$extension]['name'], URL."/symphony/extension/translationmanager/export/{$this->_context[0]}/$extension/", 'Download template'));
 						$td2 = Widget::TableData((string)count($translated).'/'.(string)count($default).' <small>('.$percent.'%)</small>');
 						$td3 = Widget::TableData((string)count($obsolete));
@@ -120,8 +118,11 @@
 					foreach (array_diff(array_keys($allextensions), $extensions) as $extension) {
 						$default = $this->_tm->defaultDictionary($extension);
 						$warnings = array_shift($default);
+						$language = $this->_tm->get($this->_context[0], $extension);
+						$translated = array_intersect_key(array_filter($language['dictionary'], 'trim'), $default);
+						$obsolete = array_diff_key($language['dictionary'], $default);
 
-						$percent = floor((count($translated) - count($obsolete)) / count($default) * 100);
+						$percent = floor(count($translated) / count($default) * 100);
 						$td1 = Widget::TableData(Widget::Anchor($allextensions[$extension]['name'], URL."/symphony/extension/translationmanager/export/{$this->_context[0]}/$extension/", 'Download template'));
 						$td2 = Widget::TableData((string)count($translated).'/'.(string)count($default).' <small>('.$percent.'%)</small>');
 						$td3 = Widget::TableData((string)count($obsolete));

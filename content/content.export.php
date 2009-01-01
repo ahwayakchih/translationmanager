@@ -51,7 +51,7 @@
 
 			$dictionary = array();
 			$translated = array_intersect_key(array_filter($translation['dictionary'], 'trim'), $default['dictionary']);
-			$missing = array_diff_key($default['dictionary'], $translation['dictionary']);
+			$missing = array_diff_key($default['dictionary'], $translated);
 			$obsolete = array_diff_key($translation['dictionary'], $default['dictionary']);
 			if (is_array($translated) && count($translated) > 0) {
 				$dictionary['%%%%%%TRANSLATED%%%%%%'] = '%%%%%%TRANSLATED%%%%%%';
