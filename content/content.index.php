@@ -52,7 +52,7 @@
 			else {
 				foreach ($translations as $lang => $extensions) {
 					$language = $this->_tm->get($lang);
-					$translated = array_intersect_key($default, array_filter($language['dictionary'], 'trim'));
+					$translated = array_intersect_key(array_filter($language['dictionary'], 'trim'), $default);
 					$obsolete = array_diff_key($language['dictionary'], $default);
 					$names = array_intersect_key($allnames, array_fill_keys($extensions, true));
 

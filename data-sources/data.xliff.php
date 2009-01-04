@@ -174,7 +174,7 @@
 
 			$sklDictionary = array();
 
-			$translated = array_intersect_key($default['dictionary'], array_filter($translation['dictionary'], 'trim'));
+			$translated = array_intersect_key(array_filter($translation['dictionary'], 'trim'), $default['dictionary']);
 			foreach ($translated as $k => $v) {
 				$sklDictionary[$k] = md5($k);
 				$unit = new XMLElement('trans-unit');
