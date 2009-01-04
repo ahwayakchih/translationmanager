@@ -59,7 +59,7 @@
 				foreach ($this->_Parent->ExtensionManager->listAll() as $extension => $about) {
 					$options[] = array($extension, in_array($extension, $fields['extensions']), $about['name']);
 				}
-				$label = Widget::Label('Includes translations for');
+				$label = Widget::Label('Includes translations of');
 				$label->appendChild(Widget::Select('fields[extensions][]', $options, array('multiple' => 'multiple')));
 				$fieldset->appendChild((isset($this->_errors['extensions']) ? $this->wrapFormElementWithError($label, $this->_errors['extensions']) : $label));
 			}
