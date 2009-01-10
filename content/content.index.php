@@ -2,8 +2,7 @@
 
 	require_once(TOOLKIT . '/class.administrationpage.php');
 	require_once(EXTENSIONS . '/translationmanager/lib/class.translationmanager.php');
-	ini_set("display_errors","2");
-	ERROR_REPORTING(E_ALL);
+
 	Class contentExtensionTranslationManagerIndex extends AdministrationPage{
 		private $_tm;
 

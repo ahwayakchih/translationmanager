@@ -84,18 +84,36 @@
 			$lang = trim($this->dsParamFILTERS['lang']);
 			$extension = trim($this->dsParamFILTERS['extension']);
 
-			if (empty($extension)) $extension = NULL;
-
 			$xliff = new XMLElement('xliff');
 			//$xliff->setIncludeHeader(true);
 			$xliff->setAttribute('version', '1.2');
+			// TODO: for some reason Symphony throws XSLT build error when i try to xsl:copy-of xliff with xmlns attribute set :(
 			//$xliff->setAttribute('xmlns', 'urn:oasis:names:tc:xliff:document:1.2');
-
 
 			if (strlen($lang) < 1) {
 				$xliff->appendChild(new XMLElement('error', 'Language code is required.'));
 				return $xliff;
 			}
+
+			// No extension name given, export all available translations
+			if (strlen($extension) < 1) {
+				foreach ($this->_tm->listExtensions($lang) as $extension) {
+					$this->toXLIFF($lang, $extension, $xliff);
+				}
+			}
+			// Extension name exists in list
+			else if (in_array($extension, $this->_tm->listExtensions($lang))) {
+				$this->toXLIFF($lang, $extension, $xliff);
+			}
+			// Invalid extension name, export everything merged into one huge translation
+			else {
+				$this->toXLIFF($lang, NULL, $xliff);
+			}
+
+			return $xliff;
+		}
+
+		private function toXLIFF($lang, $extension, &$xliff) {
 
 			$default = array(
 				'about' => array(),
@@ -130,9 +148,8 @@
 			$file->setAttribute('datatype', 'x-symphony');
 			$file->setAttribute('xml:space', 'preserve');
 			if ($extension) $file->setAttribute('product-name', $extension);
-			// TODO: load version of extension
-			//if ($extension) $file->setAttribute('product-version', $extension);
-			// TODO: convert date to format specified in http://docs.oasis-open.org/xliff/v1.2/os/xliff-core.html#date
+			if (is_array($temp = $this->_Parent->ExtensionManager->about($extension))) $file->setAttribute('product-version', $temp['version']);
+			// TODO: Make sure that date is specified in valid format (http://docs.oasis-open.org/xliff/v1.2/os/xliff-core.html#date)?
 			if ($translation['about']['release-date']) $file->setAttribute('date', $translation['about']['release-date']);
 			if ($translation['about']['name']) $file->setAttribute('category', $translation['about']['name']);
 
@@ -240,9 +257,8 @@
 
 			$file->appendChild($header);
 			$file->appendChild($body);
-			$xliff->appendChild($file);
 
-			return $xliff;
+			$xliff->appendChild($file);
 		}
 	}
 
