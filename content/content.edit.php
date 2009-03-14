@@ -135,7 +135,7 @@
 					}
 				}
 
-				$table = Widget::Table(Widget::TableHead($aTableHead), NULL, Widget::TableBody($aTableBody), 'selectable translations');
+				$table = Widget::Table(Widget::TableHead($aTableHead), NULL, Widget::TableBody($aTableBody), 'selectable translations deleting'.($isCurrent ? ' current' : ''));
 				$fieldset->appendChild($table);
 				$this->Form->appendChild($fieldset);
 
@@ -254,7 +254,7 @@
 			}
 
 			if ($noNeedToWrite && empty($written) && $_POST['fields']['current'] != 'yes') {
-				$this->pageAlert(__('There was nothing to write.'), Alert::NOTICE);
+				if (empty($deleted)) $this->pageAlert(__('There was nothing to write.'), Alert::NOTICE);
 				return;
 			}
 

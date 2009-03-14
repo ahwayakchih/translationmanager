@@ -53,15 +53,25 @@
 		public function get($lang, $name = NULL) {
 			if ($name === NULL) {
 				$result = $this->get($lang, 'symphony');
+				if (empty($result)) {
+					$result = array(
+						'about' => array(),
+						'dictionary' => array(),
+						'transliterations' => array(),
+					);
+				}
 				foreach ($this->_Parent->ExtensionManager->listAll() as $extension => $about) {
 					// array_merge_recursive duplicates data inside 'about' (so there are two names of language instead of one string) :(.
 					$temp = $this->get($lang, $extension);
 					// TODO: Merging about doesn't make much sense - new info will replace old,
-					//       so data about modifications dates and authors is useless in this case :(
+					//       so data about modification dates and authors is useless in this case :(
 					if (is_array($temp['about'])) $result['about'] = array_merge($result['about'], $temp['about']);
 					if (is_array($temp['dictionary'])) $result['dictionary'] = array_merge($result['dictionary'], $temp['dictionary']);
 					if (is_array($temp['transliterations'])) $result['transliterations'] = array_merge($result['transliterations'], $temp['transliterations']);
 				}
+
+				if (empty($result['dictionary']) && empty($result['transliterations'])) $result = array();
+
 				return $result;
 			}
 			else if (strlen($name) < 1) return array();
@@ -69,8 +79,7 @@
 			$file = TranslationManager::filePath($lang, $name);
 			if (!file_exists($file)) return array();
 
-			$data = file_get_contents($file);
-			eval('?>'.$data);
+			include($file);
 
 			return array(
 				'about' => (is_array($about) ? $about : array()),
@@ -122,10 +131,10 @@
 			$strings = array();
 			$strings[] = array(); // Warnings placeholder
 			foreach ($this->__dictionaryPaths($name) as $path) {
-				$files = General::listStructure(DOCROOT."/$path", array('php', 'tpl'), false, 'asc');
+				$files = General::listStructure(DOCROOT."/{$path}", array('php', 'tpl'), false, 'asc');
 				if (empty($files['filelist'])) continue;
 				foreach ($files['filelist'] as $file) {
-					$this->__findStrings(DOCROOT."/$path/$file", $strings);
+					$this->__findStrings(DOCROOT."/{$path}/{$file}", $strings);
 				}
 			}
 
@@ -178,7 +187,7 @@
 			else if ($name != 'symphony' && strlen($name) > 0) $names[] = $name;
 
 			foreach ($names as $name) {
-				$paths += array(
+				$paths = array_merge($paths, array(
 					'extensions/'.$name.'/content',
 					'extensions/'.$name.'/interface',
 					'extensions/'.$name.'/template',
@@ -187,7 +196,7 @@
 					'extensions/'.$name.'/fields',
 					'extensions/'.$name.'/lib', // TODO: needs testing with extensions which use "non-symphony" code in lib directory.
 					'extensions/'.$name
-				);
+				));
 			}
 
 			return $paths;
@@ -311,8 +320,8 @@
 		}
 
 		public static function filePath($lang, $name) {
-			if ($name == 'symphony') return LANG."/lang.$lang.php";
-			else return EXTENSIONS."/$name/lang/lang.$lang.php";
+			if ($name == 'symphony') return LANG."/lang.{$lang}.php";
+			else return EXTENSIONS."/{$name}/lang/lang.{$lang}.php";
 		}
 
 		public static function defaultTransliterations() {

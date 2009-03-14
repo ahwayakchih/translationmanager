@@ -10,6 +10,11 @@ th[title], td[title] {
 	cursor: help;
 }
 
+table.languages tr.selected.current td, table.translations.deleting tr.selected td {
+	border-color: #c33 !important;
+	background-color: #b33 !important;
+}
+
 table.translations {
 	margin-top: 0px;
 	margin-bottom: 1.75em;
@@ -18,3 +23,4 @@ table.translations {
 table.translations tr td:first-child {
 	width: 52%;
 }
+

@@ -53,6 +53,7 @@
 					$language = $this->_tm->get($lang);
 					$translated = array_intersect_key(array_filter($language['dictionary'], 'trim'), $default);
 					$obsolete = array_diff_key($language['dictionary'], $default);
+
 					$names = array_intersect_key($allnames, array_fill_keys($extensions, true));
 
 					if (!$language['about']['name']) $language['about']['name'] = $lang;
@@ -67,11 +68,11 @@
 					$td1->appendChild(Widget::Input('item', $lang, 'radio'));
 
 					## Add a row to the body array, assigning each cell to the row
-					$aTableBody[] = Widget::TableRow(array($td1, $td2, $td3, $td4, $td5, $td6), 'single');
+					$aTableBody[] = Widget::TableRow(array($td1, $td2, $td3, $td4, $td5, $td6), 'single'.($lang == $this->_Parent->Configuration->get('lang', 'symphony') ? ' current' : ''));
 				}
 			}
 
-			$table = Widget::Table(Widget::TableHead($aTableHead), NULL, Widget::TableBody($aTableBody));
+			$table = Widget::Table(Widget::TableHead($aTableHead), NULL, Widget::TableBody($aTableBody), 'languages');
 			$this->Form->appendChild($table);
 
 			$div = new XMLElement('div');
