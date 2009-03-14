@@ -69,14 +69,16 @@
 				else $params[] = $v;
 			}
 			return array(
-				"name" => "XLIFF",
-				"description" => "Returns translation data in <a href=\"http://docs.oasis-open.org/xliff/v1.2/os/xliff-core.html\">XLIFF</a> format.",
-				"author" => array("name" => "Marcin Konicki",
-					"website" => "http://ahwayakchih.neoni.net",
-					"email" => "ahwayakchih@neoni.net"),
-				"version" => "1.0",
-				"release-date" => "2008-12-27",
-				"recognised-url-param" => $params,
+				'name' => 'XLIFF',
+				'description' => __('Returns translation data in <a href="%s">XLIFF</a> format.', array('http://docs.oasis-open.org/xliff/v1.2/os/xliff-core.html')),
+				'author' => array(
+					'name' => 'Marcin Konicki',
+					'website' => 'http://ahwayakchih.neoni.net',
+					'email' => 'ahwayakchih@neoni.net'
+				),
+				'version' => '1.0',
+				'release-date' => '2008-12-27',
+				'recognised-url-param' => $params,
 			);
 		}
 
@@ -91,7 +93,7 @@
 			//$xliff->setAttribute('xmlns', 'urn:oasis:names:tc:xliff:document:1.2');
 
 			if (strlen($lang) < 1) {
-				$xliff->appendChild(new XMLElement('error', 'Language code is required.'));
+				$xliff->appendChild(new XMLElement('error', __('Language code is required.')));
 				return $xliff;
 			}
 
@@ -262,4 +264,3 @@
 		}
 	}
 
-?>

@@ -11,13 +11,13 @@
 
 		function about(){
 			return array(
-				"name" => "Translations",
-				"description" => "Returns list of translations installed.",
-				"author" => array("name" => "Marcin Konicki",
-					"website" => "http://ahwayakchih.neoni.net",
-					"email" => "ahwayakchih@neoni.net"),
-				"version" => "1.0",
-				"release-date" => "2009-01-05",
+				'name' => __('Translations'),
+				'description' => __('Returns list of translations installed.'),
+				'author' => array("name" => "Marcin Konicki",
+					'website' => "http://ahwayakchih.neoni.net",
+					'email' => "ahwayakchih@neoni.net"),
+				'version' => "1.0",
+				'release-date' => "2009-01-05",
 			);
 		}
 
@@ -44,4 +44,3 @@
 		}
 	}
 
-?>

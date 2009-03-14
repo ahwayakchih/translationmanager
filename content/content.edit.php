@@ -23,43 +23,43 @@
 
 			$fields = $_POST['fields'];
 
-			$name = ($fields['name'] ? $fields['name'] : ($language['about']['name'] ? $language['about']['name'] : 'Untitled'));
+			$name = ($fields['name'] ? $fields['name'] : ($language['about']['name'] ? $language['about']['name'] : __('Untitled')));
 			$this->setPageType('form');
-			$this->setTitle('Symphony &ndash; Language &ndash; '.$name);
+			$this->setTitle(__('%1$s &ndash; %2$s &ndash; %3$s', array(__('Symphony'), __('Language'), $name)));
 			$this->appendSubheading($name);
 
 			$fieldset = new XMLElement('fieldset');
 			$fieldset->setAttribute('class', 'settings');
-			$fieldset->appendChild(new XMLElement('legend', 'Essentials'));
+			$fieldset->appendChild(new XMLElement('legend', __('Essentials')));
 
 			$div = new XMLElement('div');
 			$div->setAttribute('class', (($this->_context[0] && !$isCurrent) ? 'triple group' : 'group'));
 
-			$label = Widget::Label('Name');
-			$label->appendChild(new XMLElement('i', 'Example: "English"'));
+			$label = Widget::Label(__('Name'));
+			$label->appendChild(new XMLElement('i', __('Example: "English"')));
 			$label->appendChild(Widget::Input('fields[name]', $name));
 			$div->appendChild((isset($this->_errors['name']) ? $this->wrapFormElementWithError($label, $this->_errors['name']) : $label));
 
-			$label = Widget::Label('Code');
-			$label->appendChild(new XMLElement('i', 'Example: "en"'));
+			$label = Widget::Label(__('Code'));
+			$label->appendChild(new XMLElement('i', __('Example: "en"')));
 			$label->appendChild(Widget::Input('fields[code]', ($this->_context[0] ? $this->_context[0] : $fields['code']), 'text'));
 			$div->appendChild((isset($this->_errors['code']) ? $this->wrapFormElementWithError($label, $this->_errors['code']) : $label));
 
 			if ($this->_context[0] && !$isCurrent) {
-				$label = Widget::Label('Current');
-				$label->appendChild(new XMLElement('i', '"There can be only one!"'));
-				$label->appendChild(Widget::Select('fields[current]', array(array('yes', $isCurrent, 'Yes'), array('no', !$isCurrent, 'No'))));
+				$label = Widget::Label(__('Current'));
+				$label->appendChild(new XMLElement('i', __('"There can be only one!"')));
+				$label->appendChild(Widget::Select('fields[current]', array(array('yes', $isCurrent, __('Yes')), array('no', !$isCurrent, __('No')))));
 				$div->appendChild($label);
 			}
 
 			$fieldset->appendChild($div);
 
 			if (!$this->_context[0]) {
-				$options = array(array('symphony', (is_array($fields['extensions']) ? in_array('symphony', $fields['extensions']): true), 'Symphony'));
+				$options = array(array('symphony', (is_array($fields['extensions']) ? in_array('symphony', $fields['extensions']): true), __('Symphony')));
 				foreach ($this->_Parent->ExtensionManager->listAll() as $extension => $about) {
 					$options[] = array($extension, in_array($extension, $fields['extensions']), $about['name']);
 				}
-				$label = Widget::Label('Includes translations of');
+				$label = Widget::Label(__('Includes translations of'));
 				$label->appendChild(Widget::Select('fields[extensions][]', $options, array('multiple' => 'multiple')));
 				$fieldset->appendChild((isset($this->_errors['extensions']) ? $this->wrapFormElementWithError($label, $this->_errors['extensions']) : $label));
 			}
@@ -75,20 +75,20 @@
 
 				$fieldset = new XMLElement('fieldset');
 				$fieldset->setAttribute('class', 'settings');
-				$fieldset->appendChild(new XMLElement('legend', 'Deleting'));
-				$fieldset->appendChild(new XMLElement('p', 'Selected translation files will be deleted', array('class' => 'help')));
+				$fieldset->appendChild(new XMLElement('legend', __('Deleting')));
+				$fieldset->appendChild(new XMLElement('p', __('Selected translation files will be deleted'), array('class' => 'help')));
 
 				$aTableHead = array(
-					array('Name', 'col'),
-					array('Translated', 'col'),
-					array('Obsolete', 'col'),
-					array('Parser warnings', 'col'),
+					array(__('Name'), 'col'),
+					array(__('Translated'), 'col'),
+					array(__('Obsolete'), 'col'),
+					array(__('Parser warnings'), 'col'),
 				);
 
 				$extensions = $this->_tm->listExtensions($this->_context[0]);
 
 				$allextensions = $this->_Parent->ExtensionManager->listAll();
-				$allextensions['symphony']['name'] = 'Symphony';
+				$allextensions['symphony']['name'] = __('Symphony');
 
 				$aTableBody = array();
 
@@ -103,7 +103,7 @@
 						$translated = array_intersect_key(array_filter($language['dictionary'], 'trim'), $default);
 						$obsolete = array_diff_key($language['dictionary'], $default);
 						$percent = floor(count($translated) / count($default) * 100);
-						$td1 = Widget::TableData(Widget::Anchor($allextensions[$extension]['name'], URL."/symphony/extension/translationmanager/export/{$this->_context[0]}/$extension/", 'Download template'));
+						$td1 = Widget::TableData(Widget::Anchor($allextensions[$extension]['name'], URL."/symphony/extension/translationmanager/export/{$this->_context[0]}/$extension/", __('Download template')));
 						$td2 = Widget::TableData((string)count($translated).'/'.(string)count($default).' <small>('.$percent.'%)</small>');
 						$td3 = Widget::TableData((string)count($obsolete));
 						$td4 = Widget::TableData((string)count($warnings));
@@ -123,7 +123,7 @@
 						$obsolete = array_diff_key($language['dictionary'], $default);
 
 						$percent = floor(count($translated) / count($default) * 100);
-						$td1 = Widget::TableData(Widget::Anchor($allextensions[$extension]['name'], URL."/symphony/extension/translationmanager/export/{$this->_context[0]}/$extension/", 'Download template'));
+						$td1 = Widget::TableData(Widget::Anchor($allextensions[$extension]['name'], URL."/symphony/extension/translationmanager/export/{$this->_context[0]}/$extension/", __('Download template')));
 						$td2 = Widget::TableData((string)count($translated).'/'.(string)count($default).' <small>('.$percent.'%)</small>');
 						$td3 = Widget::TableData((string)count($obsolete));
 						$td4 = Widget::TableData((string)count($warnings));
@@ -142,8 +142,8 @@
 				if (count($aTableBody2) > 0) {
 					$fieldset = new XMLElement('fieldset');
 					$fieldset->setAttribute('class', 'settings');
-					$fieldset->appendChild(new XMLElement('legend', 'Creating'));
-					$fieldset->appendChild(new XMLElement('p', 'Selected translation files will be created', array('class' => 'help')));
+					$fieldset->appendChild(new XMLElement('legend', __('Creating')));
+					$fieldset->appendChild(new XMLElement('p', __('Selected translation files will be created'), array('class' => 'help')));
 
 					$table = Widget::Table(Widget::TableHead($aTableHead), NULL, Widget::TableBody($aTableBody2), 'selectable translations');
 					$fieldset->appendChild($table);
@@ -153,11 +153,11 @@
 
 			$div = new XMLElement('div');
 			$div->setAttribute('class', 'actions');
-			$div->appendChild(Widget::Input('action[save]', ($this->_context[0] ? 'Save Changes' : 'Create translation'), 'submit', array('accesskey' => 's')));
+			$div->appendChild(Widget::Input('action[save]', ($this->_context[0] ? __('Save Changes') : __('Create translation')), 'submit', array('accesskey' => 's')));
 			
 			if($this->_context[0] && !$isCurrent){
-				$button = new XMLElement('button', 'Delete');
-				$button->setAttributeArray(array('name' => 'action[delete]', 'class' => 'confirm delete', 'title' => 'Delete this translation'));
+				$button = new XMLElement('button', __('Delete'));
+				$button->setAttributeArray(array('name' => 'action[delete]', 'class' => 'confirm delete', 'title' => __('Delete this translation')));
 				$div->appendChild($button);
 			}
 
@@ -174,30 +174,30 @@
 
 			$name = trim($_POST['fields']['name']);
 			if (strlen($name) < 1) {
-				$this->_errors['name'] = 'You have to specify name for translation.';
+				$this->_errors['name'] = __('You have to specify name for translation.');
 				return;
 			}
 
 			$code = strtolower(trim($_POST['fields']['code']));
 			if (strlen($code) < 1) {
-				$this->_errors['code'] = 'You have to specify code for translation.';
+				$this->_errors['code'] = __('You have to specify code for translation.');
 				return;
 			}
 
 			if (!$this->_context[0] && (!is_array($_POST['fields']['extensions']) || empty($_POST['fields']['extensions']))) {
-				$this->_errors['extensions'] = 'You have to select at least Symphony or one of the extensions.';
+				$this->_errors['extensions'] = __('You have to select at least Symphony or one of the extensions.');
 				return;
 			}
 
 			if ($this->_context[0] != $code && $isCurrent) {
-				$this->_errors['code'] = 'Cannot change code of translation which is in use. Change language used by symphony and try again.';
+				$this->_errors['code'] = __('Cannot change code of translation which is in use. Change language used by symphony and try again.');
 				return;
 			}
 
 			$queueForDeletion = NULL;
 			$translations = $this->_tm->listAll();
 			if (!$this->_context[0] || $this->_context[0] != $code) {
-				if (!empty($translations) && is_array($translations[$code])) $this->_errors['code'] = 'Translation <code>'.$code.'</code> already exists';
+				if (!empty($translations) && is_array($translations[$code])) $this->_errors['code'] = __('Translation <code>%s</code> already exists.', array($code));
 				else $queueForDeletion = $this->_context[0];
 			}
 
@@ -216,7 +216,7 @@
 						// TODO: Make Symphony use default transliterations if there are none in current language.
 						//       That will remove requirement of Symphony translation for every language that user wants to use as current.
 						if ($isCurrent && $extension == 'symphony') {
-							$this->pageAlert('Symphony translation is required for language used as current.', AdministrationPage::PAGE_ALERT_ERROR);
+							$this->pageAlert(__('Symphony translation is required for language used as current.'), AdministrationPage::PAGE_ALERT_ERROR);
 							return;
 						}
 						if ($this->_tm->remove($this->_context[0], $extension)) $deleted[] = $extension;
@@ -254,22 +254,22 @@
 			}
 
 			if ($noNeedToWrite && empty($written) && $_POST['fields']['current'] != 'yes') {
-				$this->pageAlert('There was nothing to write.', AdministrationPage::PAGE_ALERT_NOTICE);
+				$this->pageAlert(__('There was nothing to write.'), AdministrationPage::PAGE_ALERT_NOTICE);
 				return;
 			}
 
 			if (!$noNeedToWrite && count($written) != count($extensions)) {
 				$missing = array_diff($extensions, $written);
 
-				if (count($missing) > 1) $last = ' and '.array_pop($missing);
-				$this->pageAlert('Failed to write translation files for <code>'.implode(',', $missing).$last.'</code>. Please check permissions.', AdministrationPage::PAGE_ALERT_NOTICE);
+				if (count($missing) > 1) $last = __(' and ').array_pop($missing);
+				$this->pageAlert(__('Failed to write translation files for <code>%s</code>. Please check permissions.', array(implode(',', $missing).$last)), AdministrationPage::PAGE_ALERT_NOTICE);
 			}
 
 			if (!$noNeedToWrite && empty($written)) return;
 
 			$deleted = array();
 			if ($queueForDeletion && !$this->_tm->remove($this->_context[0])) {
-				$this->pageAlert('Failed to delete translation <code>'.$this->_context[0].'</code>. Please check file permissions.', AdministrationPage::PAGE_ALERT_NOTICE);
+				$this->pageAlert(__('Failed to delete translation <code>%s</code>. Please check file permissions.', array($this->_context[0])), AdministrationPage::PAGE_ALERT_NOTICE);
 			}
 
 			if ($_POST['fields']['current'] == 'yes' && in_array('symphony', $extensions)) $this->_tm->enable($code);
@@ -279,13 +279,12 @@
 
 		function delete() {
 			if ($this->_context[0] == $this->_Parent->Configuration->get('lang', 'symphony'))
-				$this->pageAlert('Cannot delete language in use. Please change language used by Symphony and try again.', AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Cannot delete language in use. Please change language used by Symphony and try again.'), AdministrationPage::PAGE_ALERT_ERROR);
 			else if (!$this->_tm->remove($this->_context[0]))
-				$this->pageAlert('Failed to delete translation <code>'.$this->_context[0].'</code>. Please check file permissions or if it is not in use.', AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Failed to delete translation <code>%s</code>. Please check file permissions or if it is not in use.', array($this->_context[0])), AdministrationPage::PAGE_ALERT_ERROR);
 			else
 				redirect(URL . '/symphony/extension/translationmanager/');
 		}
 
 	}
 
-?>

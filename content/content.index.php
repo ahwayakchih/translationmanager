@@ -14,8 +14,8 @@
 
 		function view(){
 			$this->setPageType('table');
-			$this->setTitle('Symphony &ndash; Translation Manager');
-			$this->appendSubheading('Languages', Widget::Anchor('Create New', $this->_Parent->getCurrentPageURL().'edit/', 'Create new translation', 'create button'));
+			$this->setTitle(__('%1$s &ndash; %2$s', array(__('Symphony'), __('Translation Manager'))));
+			$this->appendSubheading(__('Languages'), Widget::Anchor(__('Create New'), $this->_Parent->getCurrentPageURL().'edit/', __('Create new translation'), 'create button'));
 
 			$link = new XMLElement('link');
 			$link->setAttributeArray(array('rel' => 'stylesheet', 'type' => 'text/css', 'media' => 'screen', 'href' => URL.'/extensions/translationmanager/assets/admin.css'));
@@ -29,18 +29,18 @@
 
 			$warnings = array_shift($default);
 
-			$allnames = array('symphony' => 'Symphony');
+			$allnames = array('symphony' => __('Symphony'));
 			foreach ($allextensions as $extension => $about) {
 				$allnames[$extension] = $about['name'];
 			}
 
 			$aTableHead = array(
-				array('Name', 'col'),
-				array('Code', 'col'),
-				array('Extensions*', 'col', array('title' => 'Out of '.(count($allextensions)+1).' (including Symphony)')),
-				array('Translated*', 'col', array('title' => 'Out of '.count($default).(($temp = count($warnings)) > 0 ? " (with $temp parser warnings)" : ''))),
-				array('Obsolete', 'col'),
-				array('Current', 'col'),
+				array(__('Name'), 'col'),
+				array(__('Code'), 'col'),
+				array(__('Extensions*'), 'col', array('title' => __('Out of %s (including Symphony)', array(count($allextensions)+1)))),
+				array(__('Translated*'), 'col', array('title' => __('Out of %1$s (with %2$s parser warnings)', array(count($default), (count($warnings) > 0 ? count($warnings) : 'no'))))),
+				array(__('Obsolete'), 'col'),
+				array(__('Current'), 'col'),
 			);
 
 			$aTableBody = array();
@@ -62,7 +62,7 @@
 					$td3 = Widget::TableData((string)count($extensions), NULL, NULL, NULL, array('title' => implode(', ', $names)));
 					$td4 = Widget::TableData(count($translated).' <small>('.floor((count($translated) / count($default)) * 100).'%)</small>');
 					$td5 = Widget::TableData((string)count($obsolete));
-					$td6 = Widget::TableData(($lang == $current ? 'Yes' : 'No'));
+					$td6 = Widget::TableData(($lang == $current ? __('Yes') : __('No')));
 
 					$td1->appendChild(Widget::Input('item', $lang, 'radio'));
 
@@ -78,14 +78,14 @@
 			$div->setAttribute('class', 'actions');
 
 			$options = array(
-				array(NULL, false, 'With Selected...'),
-				array('delete', false, 'Delete'),
-				array('switch', false, 'Make it current'),
-				array('export', false, 'Export ZIP'),
+				array(NULL, false, __('With Selected...')),
+				array('delete', false, __('Delete')),
+				array('switch', false, __('Make it current')),
+				array('export', false, __('Export ZIP')),
 			);
 
 			$div->appendChild(Widget::Select('with-selected', $options));
-			$div->appendChild(Widget::Input('action[apply]', 'Apply', 'submit'));
+			$div->appendChild(Widget::Input('action[apply]', __('Apply'), 'submit'));
 
 			$this->Form->appendChild($div);
 		}
@@ -109,9 +109,9 @@
 
 		function delete($lang) {
 			if ($lang == $this->_Parent->Configuration->get('lang', 'symphony'))
-				$this->pageAlert('Cannot delete language in use. Please change language used by Symphony and try again.', AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Cannot delete language in use. Please change language used by Symphony and try again.'), AdministrationPage::PAGE_ALERT_ERROR);
 			else if (!$this->_tm->remove($lang))
-				$this->pageAlert('Failed to delete translation <code>'.$lang.'</code>. Please check file permissions or if it is not in use.', AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Failed to delete translation <code>%s</code>. Please check file permissions or if it is not in use.', array($lang)), AdministrationPage::PAGE_ALERT_ERROR);
 		}
 
 		function exportZIP($lang) {
@@ -121,7 +121,7 @@
 			foreach ($this->_tm->listExtensions($lang) as $extension) {
 				$path = TranslationManager::filePath($lang, $extension);
 				if (!$zip->addFromFile($path, str_replace(DOCROOT, '', $path))) {
-					$this->pageAlert('Cannot add <code>'.$path.'</code> to ZIP file. Please check file permissions.', AdministrationPage::PAGE_ALERT_ERROR);
+					$this->pageAlert(__('Cannot add <code>%s</code> to ZIP file. Please check file permissions.', array($path)), AdministrationPage::PAGE_ALERT_ERROR);
 					return false;
 				}
 			}
@@ -129,7 +129,7 @@
 			$data = $zip->save();
 
 			if (!$data) {
-				$this->pageAlert('Cannot generate ZIP data.', AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Cannot generate ZIP data.'), AdministrationPage::PAGE_ALERT_ERROR);
 				return false;
 			}
 
@@ -143,4 +143,3 @@
 		}
 	}
 
-?>
