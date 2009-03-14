@@ -38,7 +38,7 @@
 				array(__('Name'), 'col'),
 				array(__('Code'), 'col'),
 				array(__('Extensions*'), 'col', array('title' => __('Out of %s (including Symphony)', array(count($allextensions)+1)))),
-				array(__('Translated*'), 'col', array('title' => __('Out of %1$s (with %2$s parser warnings)', array(count($default), (count($warnings) > 0 ? count($warnings) : 'no'))))),
+				array(__('Translated*'), 'col', array('title' => __('Out of %1$s (with %2$s parser warnings)', array(count($default), (count($warnings) > 0 ? count($warnings) : __('no')))))),
 				array(__('Obsolete'), 'col'),
 				array(__('Current'), 'col'),
 			);
