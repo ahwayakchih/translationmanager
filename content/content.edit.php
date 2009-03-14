@@ -216,7 +216,7 @@
 						// TODO: Make Symphony use default transliterations if there are none in current language.
 						//       That will remove requirement of Symphony translation for every language that user wants to use as current.
 						if ($isCurrent && $extension == 'symphony') {
-							$this->pageAlert(__('Symphony translation is required for language used as current.'), AdministrationPage::PAGE_ALERT_ERROR);
+							$this->pageAlert(__('Symphony translation is required for language used as current.'), Alert::ERROR);
 							return;
 						}
 						if ($this->_tm->remove($this->_context[0], $extension)) $deleted[] = $extension;
@@ -254,7 +254,7 @@
 			}
 
 			if ($noNeedToWrite && empty($written) && $_POST['fields']['current'] != 'yes') {
-				$this->pageAlert(__('There was nothing to write.'), AdministrationPage::PAGE_ALERT_NOTICE);
+				$this->pageAlert(__('There was nothing to write.'), Alert::NOTICE);
 				return;
 			}
 
@@ -262,14 +262,14 @@
 				$missing = array_diff($extensions, $written);
 
 				if (count($missing) > 1) $last = __(' and ').array_pop($missing);
-				$this->pageAlert(__('Failed to write translation files for <code>%s</code>. Please check permissions.', array(implode(',', $missing).$last)), AdministrationPage::PAGE_ALERT_NOTICE);
+				$this->pageAlert(__('Failed to write translation files for <code>%s</code>. Please check permissions.', array(implode(',', $missing).$last)), Alert::NOTICE);
 			}
 
 			if (!$noNeedToWrite && empty($written)) return;
 
 			$deleted = array();
 			if ($queueForDeletion && !$this->_tm->remove($this->_context[0])) {
-				$this->pageAlert(__('Failed to delete translation <code>%s</code>. Please check file permissions.', array($this->_context[0])), AdministrationPage::PAGE_ALERT_NOTICE);
+				$this->pageAlert(__('Failed to delete translation <code>%s</code>. Please check file permissions.', array($this->_context[0])), Alert::NOTICE);
 			}
 
 			if ($_POST['fields']['current'] == 'yes' && in_array('symphony', $extensions)) $this->_tm->enable($code);
@@ -279,9 +279,9 @@
 
 		function delete() {
 			if ($this->_context[0] == $this->_Parent->Configuration->get('lang', 'symphony'))
-				$this->pageAlert(__('Cannot delete language in use. Please change language used by Symphony and try again.'), AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Cannot delete language in use. Please change language used by Symphony and try again.'), Alert::ERROR);
 			else if (!$this->_tm->remove($this->_context[0]))
-				$this->pageAlert(__('Failed to delete translation <code>%s</code>. Please check file permissions or if it is not in use.', array($this->_context[0])), AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Failed to delete translation <code>%s</code>. Please check file permissions or if it is not in use.', array($this->_context[0])), Alert::ERROR);
 			else
 				redirect(URL . '/symphony/extension/translationmanager/');
 		}

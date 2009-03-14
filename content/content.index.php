@@ -109,9 +109,9 @@
 
 		function delete($lang) {
 			if ($lang == $this->_Parent->Configuration->get('lang', 'symphony'))
-				$this->pageAlert(__('Cannot delete language in use. Please change language used by Symphony and try again.'), AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Cannot delete language in use. Please change language used by Symphony and try again.'), Alert::ERROR);
 			else if (!$this->_tm->remove($lang))
-				$this->pageAlert(__('Failed to delete translation <code>%s</code>. Please check file permissions or if it is not in use.', array($lang)), AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Failed to delete translation <code>%s</code>. Please check file permissions or if it is not in use.', array($lang)), Alert::ERROR);
 		}
 
 		function exportZIP($lang) {
@@ -121,7 +121,7 @@
 			foreach ($this->_tm->listExtensions($lang) as $extension) {
 				$path = TranslationManager::filePath($lang, $extension);
 				if (!$zip->addFromFile($path, str_replace(DOCROOT, '', $path))) {
-					$this->pageAlert(__('Cannot add <code>%s</code> to ZIP file. Please check file permissions.', array($path)), AdministrationPage::PAGE_ALERT_ERROR);
+					$this->pageAlert(__('Cannot add <code>%s</code> to ZIP file. Please check file permissions.', array($path)), Alert::ERROR);
 					return false;
 				}
 			}
@@ -129,7 +129,7 @@
 			$data = $zip->save();
 
 			if (!$data) {
-				$this->pageAlert(__('Cannot generate ZIP data.'), AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Cannot generate ZIP data.'), Alert::ERROR);
 				return false;
 			}
 

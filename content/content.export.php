@@ -19,7 +19,7 @@
 
 			if (strlen($lang) < 1) {
 				$this->setPageType('form');
-				$this->pageAlert(__('Language code is required.'), AdministrationPage::PAGE_ALERT_ERROR);
+				$this->pageAlert(__('Language code is required.'), Alert::ERROR);
 				return;
 			}
 
