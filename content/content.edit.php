@@ -24,6 +24,7 @@
 			$fields = $_POST['fields'];
 
 			$name = ($fields['name'] ? $fields['name'] : ($language['about']['name'] ? $language['about']['name'] : __('Untitled')));
+			$this->setPageType('table');
 			$this->setPageType('form');
 			$this->setTitle(__('%1$s &ndash; %2$s &ndash; %3$s', array(__('Symphony'), __('Language'), $name)));
 			$this->appendSubheading($name);
@@ -67,7 +68,6 @@
 			$this->Form->appendChild($fieldset);
 
 			if ($this->_context[0]) {
-				$this->setPageType('table');
 				$link = new XMLElement('link');
 				$link->setAttributeArray(array('rel' => 'stylesheet', 'type' => 'text/css', 'media' => 'screen', 'href' => URL.'/extensions/translationmanager/assets/admin.css'));
 				$this->addElementToHead($link, 500);
