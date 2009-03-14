@@ -61,16 +61,16 @@
 					);
 				}
 				foreach ($this->_Parent->ExtensionManager->listAll() as $extension => $about) {
-					// array_merge_recursive duplicates data inside 'about' (so there are two names of language instead of one string) :(.
 					$temp = $this->get($lang, $extension);
-					// TODO: Merging about doesn't make much sense - new info will replace old,
-					//       so data about modification dates and authors is useless in this case :(
-					if (is_array($temp['about'])) $result['about'] = array_merge($result['about'], $temp['about']);
+					if (is_array($temp['about'])) {
+						$result['about']['name'] = $temp['about']['name'];
+						$this->__updateAuthors($result['about'], $temp['about']);
+					}
 					if (is_array($temp['dictionary'])) $result['dictionary'] = array_merge($result['dictionary'], $temp['dictionary']);
 					if (is_array($temp['transliterations'])) $result['transliterations'] = array_merge($result['transliterations'], $temp['transliterations']);
 				}
 
-				if (empty($result['dictionary']) && empty($result['transliterations'])) $result = array();
+				if (empty($result['about']) && empty($result['dictionary']) && empty($result['transliterations'])) $result = array();
 
 				return $result;
 			}
@@ -142,21 +142,27 @@
 			return $strings;
 		}
 
-		private function __updateAuthors(&$about) {
-			$name = trim($this->_Parent->Author->getFullName());
-			$date = date('Y-m-d');
-			if (isset($about['author']['name']) && trim($about['author']['name']) && trim($about['author']['name']) != $name) {
+		private function __updateAuthors(&$about, $author = NULL) {
+			if (!is_array($author) || empty($author)) {
+				$author = array(
+					'name' => trim($this->_Parent->Author->getFullName()),
+					'website' => URL,
+					'email' => trim($this->_Parent->Author->get('email')),
+					'release-date' => date('Y-m-d'),
+				);
+			}
+			else if (!isset($author['release-date'])) $author['release-date'] = date('Y-m-d');
+
+			if (isset($about['author']['name']) && !is_array($about['author']['name'])) {
 				$about['author'] = array(trim($about['author']['name']) => $about['author']);
 			}
-			$about['author'][$name] = array(
-				'name' => $name,
-				'website' => URL,
-				'email' => trim($this->_Parent->Author->get('email')),
-				'release-date' => $date,
-			);
-			$about['release-date'] = $date;
-			if (is_array($about['author']) && is_array($about['author'][0])) uasort($about['author'], array($this, '__sortAuthorsByDate'));
 
+			// Add author only only if it's not there yet, or if existing date is older than the one in new data set
+			if (!isset($about['author'][$author['name']]) || strnatcmp($about['author'][$author['name']]['release-date'], $author['release-date']) < 0) {
+				$about['author'][$author['name']] = $author;
+			}
+
+			uasort($about['author'], array($this, '__sortAuthorsByDate'));
 		}
 
 		private function __sortAuthorsByDate($a, $b) {
