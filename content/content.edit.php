@@ -212,13 +212,6 @@
 				$deleted = array();
 				foreach ($_POST['delete'] as $extension => $v) {
 					if (in_array($extension, $extensions) && $v == 'on') {
-						// Require symphony translation for current language.
-						// TODO: Make Symphony use default transliterations if there are none in current language.
-						//       That will remove requirement of Symphony translation for every language that user wants to use as current.
-						if ($isCurrent && $extension == 'symphony') {
-							$this->pageAlert(__('Symphony translation is required for language used as current.'), Alert::ERROR);
-							return;
-						}
 						if ($this->_tm->remove($this->_context[0], $extension)) $deleted[] = $extension;
 					}
 				}

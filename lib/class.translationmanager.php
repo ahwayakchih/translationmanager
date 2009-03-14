@@ -110,9 +110,6 @@
 		}
 
 		public function remove($lang, $name = NULL) {
-			// TODO: remove requirement for 'symphony' in current language
-			if (strlen($lang) < 1 || ($lang == $this->_Parent->Configuration->get('lang', 'symphony') && $name == 'symphony')) return false;
-
 			if ($name === NULL) {
 				if (!$this->remove($lang, 'symphony')) return false;
 				foreach ($this->_Parent->ExtensionManager->listAll() as $extension => $about) {
